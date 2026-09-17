@@ -74,8 +74,10 @@ Wording:
 
 Every field is optional.
 
-- `digit`: highlight every placed copy of this digit and every candidate for it.
-- `houses`: house indices to shade.
+- `digit`: highlight every placed copy of this digit and every candidate for it. Each
+  cell that holds the digit, or a pencil mark for it, is shaded as a whole.
+- `houses`: house indices to shade. Inside a shaded house the digit colours win, so the
+  cells where the digit can go still stand out.
 - `cells`: `[cell, role]` pairs. Roles: `key` (cells in the pattern), `target` (cells
   that change), `fin`, and `a` and `b` (the two colors in coloring and chains).
 - `marks`: `[cell, digit, role]` for single candidates. Roles: `key`, `elim` (being
