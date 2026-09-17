@@ -24,6 +24,7 @@ A personal remake of the iPhone game Enjoy Sudoku.
 - Levels the manual lists without a new technique (`src/engine/rating.js`): Never Played to Super Simple need only Full House and are split by the number of empty cells; Diabolical is a puzzle whose hardest technique is Fiendish and that uses Fiendish techniques in 2 or more steps.
 - Time added for hints and other help: `HINT_PENALTY_SECONDS` in `src/engine/hint.js` and `PENALTY` in `src/app/game.js`.
 - Skin names, digit styles and the app icon.
+- A tap makes a pencil mark and a hold places the digit, or the other way round (the Tap setting, `onPress` in `src/app/dom.js`). A hold always does the opposite of a tap, and the Pencil or Place button swaps the two.
 
 ## Rules
 

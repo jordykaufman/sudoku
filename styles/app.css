@@ -68,7 +68,7 @@ body {
   background: var(--bg); color: var(--text);
   font: 17px/1.35 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
-  overscroll-behavior: none;
+  -webkit-touch-callout: none; overscroll-behavior: none;
 }
 #app {
   min-height: 100%; display: flex; flex-direction: column;
@@ -113,7 +113,7 @@ table.stats th:first-child, table.stats td:first-child { text-align: left; }
 .topbar .clock { min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
 .board-wrap { position: relative; width: min(100%, calc(100dvh - 300px)); aspect-ratio: 1; container-type: inline-size; }
 .board {
-  width: 100%; height: 100%; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); gap: 2px;
+  width: 100%; height: 100%; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); gap: 2px; touch-action: manipulation;
   background: var(--line-thick); border: 2px solid var(--line-thick); border-radius: 6px; overflow: hidden;
 }
 .box { display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); gap: 1px; background: var(--line-thin); }
