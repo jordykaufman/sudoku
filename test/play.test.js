@@ -2,6 +2,13 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { LONG_PRESS_MS, onPress } from '../src/app/dom.js';
 import { tapMakesMark } from '../src/app/play.js';
+import { resolveSkin } from '../src/app/settings.js';
+
+test('the Follow phone skin is Paper by day and Night in dark mode', () => {
+  assert.equal(resolveSkin('auto', false), 'paper');
+  assert.equal(resolveSkin('auto', true), 'night');
+  assert.equal(resolveSkin('sand', true), 'sand');
+});
 
 test('what a tap does follows the Tap setting, the Pencil or Place button and rapid mode', () => {
   assert.equal(tapMakesMark({ tap: 'mark', swapped: false, rapid: false }), true);

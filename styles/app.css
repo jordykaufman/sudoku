@@ -3,7 +3,7 @@
 .skin-paper {
   --bg: #f4f1ea; --panel: #ffffff; --button: #e6e1d6; --text: #1d1d1f; --muted: #6b6b70; --link: #2356a8;
   --cell: #fffdf8; --line-thin: #cbc4b5; --line-thick: #3b3a36;
-  --given: #1d1d1f; --entry: #2356a8; --mark: #6b6b70;
+  --given: #1d1d1f; --entry: #2356a8; --mark: #3b3b40;
   --selected: #cfe3d4; --hl-digit: #fbe7a0; --hl-mark: #f7d3dc; --house: #dcefdc;
   --key: #c77d00; --target: #2e7d4f; --target-bg: #c4ead0; --fin: #8a4fbf;
   --color-a: #2f6fd0; --color-b: #d0572f; --color-a-bg: #d9e6fa; --color-b-bg: #fadfd6;
@@ -13,7 +13,7 @@
 .skin-night {
   --bg: #111214; --panel: #1d1f22; --button: #2a2d31; --text: #ececec; --muted: #9a9aa0; --link: #7fb2ff;
   --cell: #17191c; --line-thin: #3a3d42; --line-thick: #8a8d93;
-  --given: #f2f2f2; --entry: #7fb2ff; --mark: #a0a3a8;
+  --given: #f2f2f2; --entry: #7fb2ff; --mark: #d6d8dc;
   --selected: #24452f; --hl-digit: #4d4217; --hl-mark: #4a2a33; --house: #1f3a28;
   --key: #f0b44c; --target: #5fd08c; --target-bg: #1f4a31; --fin: #c291f0;
   --color-a: #5d95f0; --color-b: #f08a5d; --color-a-bg: #1f3152; --color-b-bg: #52301f;
@@ -23,7 +23,7 @@
 .skin-slate {
   --bg: #1f2833; --panel: #2a3542; --button: #34414f; --text: #e8edf2; --muted: #a3b0bd; --link: #8fd3ff;
   --cell: #26313d; --line-thin: #3e4b59; --line-thick: #a9b6c3;
-  --given: #f4f7fa; --entry: #8fd3ff; --mark: #a9b6c3;
+  --given: #f4f7fa; --entry: #8fd3ff; --mark: #d8e0e8;
   --selected: #2f5a46; --hl-digit: #5a5220; --hl-mark: #5a3040; --house: #294a3a;
   --key: #f0b44c; --target: #6fe0a0; --target-bg: #245a40; --fin: #d0a0ff;
   --color-a: #5d95f0; --color-b: #f08a5d; --color-a-bg: #243a5e; --color-b-bg: #5e3a24;
@@ -33,7 +33,7 @@
 .skin-sea {
   --bg: #e4eff5; --panel: #ffffff; --button: #d0e2ec; --text: #10222c; --muted: #58707e; --link: #0b6e8a;
   --cell: #f7fbfd; --line-thin: #b3cad8; --line-thick: #1f4e66;
-  --given: #10222c; --entry: #0b6e8a; --mark: #58707e;
+  --given: #10222c; --entry: #0b6e8a; --mark: #2a3d48;
   --selected: #c5e4d3; --hl-digit: #fdeaa0; --hl-mark: #f8d2dc; --house: #d3eedd;
   --key: #c77d00; --target: #1e7a4a; --target-bg: #c4ead0; --fin: #8a4fbf;
   --color-a: #2f6fd0; --color-b: #d0572f; --color-a-bg: #d9e6fa; --color-b-bg: #fadfd6;
@@ -43,7 +43,7 @@
 .skin-sand {
   --bg: #efe3cf; --panel: #fbf5ea; --button: #e2d2b8; --text: #2d2213; --muted: #7a6a52; --link: #8a3b12;
   --cell: #fdf8ef; --line-thin: #d3c2a2; --line-thick: #5a4527;
-  --given: #2d2213; --entry: #8a3b12; --mark: #7a6a52;
+  --given: #2d2213; --entry: #8a3b12; --mark: #46392a;
   --selected: #d8e8c6; --hl-digit: #f7e08a; --hl-mark: #f2c9c9; --house: #e1eccf;
   --key: #b36b00; --target: #3b7d2e; --target-bg: #cfe8c4; --fin: #7d4fa8;
   --color-a: #2f6fd0; --color-b: #c0392b; --color-a-bg: #d9e6fa; --color-b-bg: #f6d6cf;
@@ -53,7 +53,7 @@
 .skin-contrast {
   --bg: #000000; --panel: #111111; --button: #262626; --text: #ffffff; --muted: #cccccc; --link: #ffd400;
   --cell: #000000; --line-thin: #7a7a7a; --line-thick: #ffffff;
-  --given: #ffffff; --entry: #ffd400; --mark: #e0e0e0;
+  --given: #ffffff; --entry: #ffd400; --mark: #ffffff;
   --selected: #0050a0; --hl-digit: #6b5a00; --hl-mark: #6b0038; --house: #00472a;
   --key: #ffb000; --target: #00ff88; --target-bg: #005c33; --fin: #e0a0ff;
   --color-a: #3d8bff; --color-b: #ff7a3d; --color-a-bg: #002a66; --color-b-bg: #662a00;
@@ -139,10 +139,10 @@ table.stats th:first-child, table.stats td:first-child { text-align: left; }
 .cell.ghost .digit { color: var(--ok); opacity: 0.8; }
 .cell.selected { background: var(--selected); box-shadow: inset 0 0 0 2px var(--active); }
 .marks { position: absolute; inset: 0; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); }
-.mark { display: flex; align-items: center; justify-content: center; font-size: 2.7cqw; line-height: 1; color: var(--mark); }
+.mark { display: flex; align-items: center; justify-content: center; font-size: 3cqw; font-weight: 500; line-height: 1; color: var(--mark); }
 .marks.variable { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; column-gap: 0.35em; padding: 0 2px; }
 .marks.variable.few .mark { font-size: 4.2cqw; }
-.marks.variable.some .mark { font-size: 3.3cqw; }
+.marks.variable.some .mark { font-size: 3.5cqw; }
 .mark.hl { background: var(--hl-mark); border-radius: 3px; }
 .mark.key { color: var(--key); font-weight: 800; }
 .mark.fin { color: var(--fin); font-weight: 800; }

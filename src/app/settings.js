@@ -21,12 +21,16 @@ export const SETTINGS = [
   { key: 'keepSaved', label: 'Keep saved positions', type: 'switch', default: false,
     help: 'When off, a saved position is deleted once you restore it.' },
   { key: 'awake', label: 'Keep screen on', type: 'switch', default: false },
-  { key: 'skin', label: 'Skin', choices: [['paper', 'Paper'], ['sand', 'Sand'], ['sea', 'Sea'], ['slate', 'Slate'], ['night', 'Night'], ['contrast', 'Contrast']], default: 'paper' },
+  { key: 'skin', label: 'Skin', choices: [['auto', 'Follow phone'], ['paper', 'Paper'], ['sand', 'Sand'], ['sea', 'Sea'], ['slate', 'Slate'], ['night', 'Night'], ['contrast', 'Contrast']], default: 'paper',
+    help: 'Follow phone uses Paper, or Night when the phone is in dark mode.' },
   { key: 'font', label: 'Digits', choices: [['regular', '1 2 3'], ['bold', 'Bold'], ['serif', 'Serif'], ['kanji', '一 二 三']], default: 'regular' },
   { key: 'markStyle', label: 'Pencil mark style', choices: [['grid', 'Fixed grid'], ['variable', 'Grow when few']], default: 'grid' },
 ];
 
 const DEFAULTS = Object.fromEntries(SETTINGS.map((s) => [s.key, s.default]));
+
+// The skin class to use: 'auto' follows the phone's dark mode.
+export const resolveSkin = (skin, dark) => (skin === 'auto' ? (dark ? 'night' : 'paper') : skin);
 
 export function loadSettings() {
   return { ...DEFAULTS, ...load('settings', {}) };
