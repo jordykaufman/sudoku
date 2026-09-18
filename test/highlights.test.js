@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { fishCells, singleCells } from '../src/app/highlights.js';
 import { Board } from '../src/engine/board.js';
-import { findBasicFishFor } from '../src/engine/techniques/fish.js';
+import { findXWingFor } from '../src/engine/techniques/fish.js';
 
 // The X-Wing example from test/fish.test.js: 5 in rows 2 and 5, columns 5 and 8, removes 5 from R4C5.
 const XWING = `
@@ -24,12 +24,19 @@ const viewOf = (board) => ({
   allowed: (cell) => board.cands[cell],
 });
 
-test('the fish finder for one digit finds the X-Wing and nothing for a digit without one', () => {
+test('the X-Wing finder for one digit finds the X-Wing and nothing for a digit without one', () => {
   const board = Board.fromCandidateGrid(XWING);
-  const step = findBasicFishFor(board, 5);
+  const step = findXWingFor(board, 5);
   assert.equal(step.technique, 'x-wing');
   assert.deepEqual(step.eliminations, [[31, 5]]);
-  assert.equal(findBasicFishFor(board, 2), null, 'the 2s form a Swordfish that removes nothing');
+  assert.equal(findXWingFor(board, 2), null, 'the 2s form a Swordfish, which is not wanted');
+});
+
+test('an X-Wing with a corner missing is not reported', () => {
+  // Without the 5 in R2C8, the 5s of rows 2 and 5 still sit in columns 5 and 8, but R2C5 is a
+  // hidden single, not one corner of a rectangle.
+  const board = Board.fromCandidateGrid(XWING.replace('4   58  2', '4   8   2'));
+  assert.equal(findXWingFor(board, 5), null);
 });
 
 test('fish cells are the four cells of the X-Wing', () => {

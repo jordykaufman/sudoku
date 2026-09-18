@@ -103,10 +103,20 @@ function findBasicFish(board, size, id, only = 0) {
   }, only);
 }
 
-// The first X-Wing, or else Swordfish, for `digit` that removes a candidate. The board
-// highlights its cells when the digit is selected.
-export function findBasicFishFor(board, digit) {
-  return findBasicFish(board, 2, 'x-wing', digit) ?? findBasicFish(board, 3, 'swordfish', digit);
+// The first X-Wing for `digit` with all four cells holding the candidate and at least one
+// removal: two rows whose candidates for the digit sit in the same two columns, or the other
+// way round. The board outlines its cells when the digit is selected.
+export function findXWingFor(board, digit) {
+  return search(board, 2, ({ digit: d, o, masks, base, union }) => {
+    if (POPCOUNT[union] !== 2 || base.lines.some((line) => masks[line] !== union)) return null;
+    const eliminations = [];
+    for (let line = 0; line < 9; line++) {
+      if (base.mask & (1 << line)) continue;
+      for (const pos of POSITIONS[masks[line] & union]) eliminations.push([o.cell(line, pos), d]);
+    }
+    if (!eliminations.length) return null;
+    return fishStep({ id: 'x-wing', digit: d, o, masks, base, cover: union, fins: [], block: -1, thin: [], eliminations });
+  }, digit);
 }
 
 // Finned and sashimi fish. The cover lines are chosen from the lines that hold candidates

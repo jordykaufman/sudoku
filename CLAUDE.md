@@ -25,7 +25,7 @@ A personal remake of the iPhone game Enjoy Sudoku.
 - Time added for hints and other help: `HINT_PENALTY_SECONDS` in `src/engine/hint.js` and `PENALTY` in `src/app/game.js`.
 - Skin names, digit styles and the app icon.
 - A tap makes a pencil mark and a hold places the digit, or the other way round (the Tap setting, `onPress` in `src/app/dom.js`). A hold always does the opposite of a tap, and the Pencil or Place button swaps the two.
-- Two optional highlights for the selected digit (settings Show singles and Show fish, `src/app/highlights.js`): a stronger colour on a cell that is the only place left for it in a row or column, and an outline on the cells of an X-Wing or Swordfish for it.
+- Two optional highlights for the selected digit (settings Show singles and Show fish, `src/app/highlights.js`): a stronger colour on a cell that is the only place left for it in a row or column, and an outline on the four cells of an X-Wing for it.
 
 ## Rules
 

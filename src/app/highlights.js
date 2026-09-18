@@ -1,6 +1,6 @@
 import { Board } from '../engine/board.js';
 import { HOUSES, bit } from '../engine/grid.js';
-import { findBasicFishFor } from '../engine/techniques/fish.js';
+import { findXWingFor } from '../engine/techniques/fish.js';
 
 // Extra highlights for the selected digit, both optional (settings Show singles and Show
 // fish). `game` provides values, givens, shownMarks(cell) and allowed(cell).
@@ -29,10 +29,10 @@ export function singleCells(game, digit) {
   return cells;
 }
 
-// The cells of the first X-Wing or Swordfish for `digit` that removes a pencil mark.
+// The four cells of the first X-Wing for `digit` that removes a pencil mark.
 export function fishCells(game, digit) {
   const board = Board.fromValues(game.values, game.givens);
   for (let cell = 0; cell < 81; cell++) if (!game.values[cell]) board.cands[cell] &= seen(game, cell);
-  const step = findBasicFishFor(board, digit);
+  const step = findXWingFor(board, digit);
   return new Set(step ? step.stages[1].marks.map(([cell]) => cell) : []);
 }

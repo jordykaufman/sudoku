@@ -15,7 +15,7 @@ export const SETTINGS = [
   { key: 'singles', label: 'Show singles', type: 'switch', default: true,
     help: 'With a digit highlighted, a cell that is the only place left for it in its row or column gets a stronger colour.' },
   { key: 'fish', label: 'Show fish', type: 'switch', default: true,
-    help: 'With a digit highlighted, outlines the cells of an X-Wing or Swordfish for it that removes a pencil mark.' },
+    help: 'With a digit highlighted, outlines the four cells of an X-Wing for it that removes a pencil mark.' },
   { key: 'clock', label: 'Clock', choices: [['never', 'Hidden'], ['end', 'At the end'], ['always', 'Always']], default: 'always' },
   { key: 'showSolvable', label: 'Show solvable', type: 'switch', default: false,
     help: 'Colours the digit buttons green while the board can still be finished and red after a wrong digit. Adds time for each wrong move.' },
