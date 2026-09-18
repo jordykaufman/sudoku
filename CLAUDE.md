@@ -16,6 +16,7 @@ A personal remake of the iPhone game Enjoy Sudoku.
 - iPhone manual, from an older version with 7 levels: http://www.enjoysudoku.com/iphone/manual.html
 - Android manual, with 16 levels and the techniques each one needs. This app's levels come from it: http://www.enjoysudoku.com/android/manual.html
 - Web version, still playable: http://www.enjoysudoku.com/webplay/. Its hints come in stages: first a digit, then the technique name with the house highlighted, then the cell.
+- Two keypads below the board: large digits to place a digit, small digits for pencil marks (Jordy's memory of the iPhone app, and how a reviewer describes it). This app does the same, so nothing else decides whether a tap places or marks.
 - Technique definitions: Sudopedia mirror (http://sudopedia.enjoysudoku.com/), HoDoKu (https://hodoku.sourceforge.net/en/techniques.php), SudokuWiki (https://www.sudokuwiki.org/Strategy_Families).
 
 ## Our own choices (not from the original)
@@ -24,7 +25,6 @@ A personal remake of the iPhone game Enjoy Sudoku.
 - Levels the manual lists without a new technique (`src/engine/rating.js`): Never Played to Super Simple need only Full House and are split by the number of empty cells; Diabolical is a puzzle whose hardest technique is Fiendish and that uses Fiendish techniques in 2 or more steps.
 - Time added for hints and other help: `HINT_PENALTY_SECONDS` in `src/engine/hint.js` and `PENALTY` in `src/app/game.js`.
 - Skin names, digit styles and the app icon.
-- A tap makes a pencil mark and a hold places the digit, or the other way round (the Tap setting, `onPress` in `src/app/dom.js`). A hold always does the opposite of a tap, and the Pencil or Place button swaps the two.
 - Two optional highlights for the selected digit (settings Show singles and Show fish, `src/app/highlights.js`): a stronger colour on a cell that is the only place left for it in a row or column, and an outline on the four cells of an X-Wing for it.
 
 ## Rules

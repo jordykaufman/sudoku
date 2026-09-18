@@ -2,16 +2,9 @@ import { ROW } from '../engine/grid.js';
 import { LEVELS } from '../engine/levels.js';
 import { techniqueById } from '../engine/techniques/index.js';
 import { BoardView } from './board-view.js';
-import { digitLabel, formatTime, h, onPress } from './dom.js';
+import { digitLabel, formatTime, h } from './dom.js';
 import { fishCells, singleCells } from './highlights.js';
 
-const DOUBLE_TAP_MS = 350;
-
-// Whether a tap makes a pencil mark rather than placing the digit. `tap` is the Tap setting,
-// `swapped` is the Pencil or Place button, `rapid` the rapid pencil mode. A hold does the opposite.
-export function tapMakesMark({ tap, swapped, rapid }) {
-  return rapid || swapped !== (tap === 'mark');
-}
 
 // The game screen. `app` provides: settings, saveGame(game), finishGame(game), openMenu()
 // and openLesson(techniqueId).
@@ -21,32 +14,31 @@ export class PlayScreen {
     this.game = game;
     this.selectedCell = -1;
     this.selectedDigit = 0;
-    this.pencil = false; // the Pencil or Place button: swaps what a tap and a hold do
-    this.rapid = false; // pick a cell, then tap digits to turn its pencil marks on and off
+    this.selectedMode = 'place'; // what the selected digit does to a cell: 'place' or 'mark'
     this.erasing = false;
-    this.lastPencilTap = 0;
     this.panel = 'pad'; // 'pad', 'menu' (hint options) or 'hint'
     this.hint = null;
     this.stageIndex = 0;
     this.flash = ''; // 'solvable' or 'unsolvable' for a moment after asking
     this.ticks = 0;
 
-    this.board = new BoardView((cell, held) => this.tapCell(cell, held));
+    this.board = new BoardView((cell) => this.tapCell(cell));
     this.board.onBlinkEnd = () => this.render();
     this.title = h('div', { class: 'title' });
     this.clock = h('div', { class: 'clock' });
-    this.digitButtons = Array.from({ length: 9 }, (_, i) => {
-      const button = h('button');
-      onPress(button, (held) => this.tapDigit(i + 1, held));
-      return button;
-    });
-    this.pad = h('div', { class: 'pad' }, this.digitButtons);
-    this.pencilButton = h('button', { onclick: () => this.tapPencil() }, 'Pencil');
+    // Two keypads, as in the original: large digits place a digit, small digits make pencil marks.
+    const pad = (mode, title) => {
+      const buttons = Array.from({ length: 9 }, (_, i) => h('button', { onclick: () => this.tapDigit(i + 1, mode) }));
+      const el = h('div', { class: 'pad-col' }, h('div', { class: 'pad-title' }, title), h('div', { class: `pad ${mode}` }, buttons));
+      return { mode, buttons, el };
+    };
+    this.pads = [pad('place', 'Digit'), pad('mark', 'Pencil mark')];
+    this.padsEl = h('div', { class: 'pads' }, this.pads.map((p) => p.el));
     this.eraseButton = h('button', { onclick: () => this.tapErase() }, 'Erase');
     this.undoButton = h('button', { onclick: () => this.change(() => this.game.undo()) }, 'Undo');
     this.redoButton = h('button', { onclick: () => this.change(() => this.game.redo()) }, 'Redo');
     this.hintButton = h('button', { onclick: () => this.openPanel('menu') }, 'Hint');
-    this.tools = h('div', { class: 'tools' }, this.pencilButton, this.eraseButton, this.undoButton, this.redoButton, this.hintButton);
+    this.tools = h('div', { class: 'tools' }, this.eraseButton, this.undoButton, this.redoButton, this.hintButton);
     this.controls = h('div', { class: 'controls' });
     this.el = h(
       'div',
@@ -132,20 +124,15 @@ export class PlayScreen {
     this.render();
   }
 
-  inputMode() {
-    return this.rapid ? 'cell' : this.app.settings.input;
-  }
-
-  // `held` is true for a hold instead of a tap. A hold only matters when it enters a digit.
-  tapCell(cell, held = false) {
+  tapCell(cell) {
     if (this.panel !== 'pad' || this.game.finished) return;
     if (this.erasing) {
       this.change(() => this.game.erase(cell));
       return;
     }
-    const input = this.inputMode();
+    const input = this.app.settings.input;
     if (input !== 'cell' && this.selectedDigit) {
-      this.act(cell, this.selectedDigit, held);
+      this.act(cell, this.selectedDigit, this.selectedMode === 'mark');
       return;
     }
     if (input === 'digit') return;
@@ -153,22 +140,28 @@ export class PlayScreen {
     this.render();
   }
 
-  tapDigit(digit, held = false) {
+  // `mode` is the keypad the digit came from: 'place' or 'mark'.
+  tapDigit(digit, mode) {
     if (this.panel !== 'pad' || this.game.finished) return;
     this.erasing = false;
-    const input = this.inputMode();
+    const input = this.app.settings.input;
     if (input !== 'digit' && this.selectedCell >= 0) {
-      this.act(this.selectedCell, digit, held);
+      this.act(this.selectedCell, digit, mode === 'mark');
       return;
     }
     if (input === 'cell') return;
-    this.selectedDigit = this.selectedDigit === digit ? 0 : digit;
+    if (this.selectedDigit === digit && this.selectedMode === mode) {
+      this.selectedDigit = 0;
+    } else {
+      this.selectedDigit = digit;
+      this.selectedMode = mode;
+    }
     this.render();
   }
 
-  act(cell, digit, held = false) {
+  // Places `digit` in `cell`, or toggles its pencil mark when `mark` is true.
+  act(cell, digit, mark) {
     const settings = this.app.settings;
-    const mark = tapMakesMark({ tap: settings.tap, swapped: this.pencil, rapid: this.rapid }) !== held;
     if (mark) {
       if (this.game.toggleMark(cell, digit)) {
         this.sound();
@@ -190,23 +183,8 @@ export class PlayScreen {
     this.afterChange();
   }
 
-  tapPencil() {
-    const now = Date.now();
-    if (this.rapid) {
-      this.rapid = false;
-      this.pencil = false;
-    } else if (this.pencil && now - this.lastPencilTap < DOUBLE_TAP_MS) {
-      this.rapid = true;
-      this.selectedDigit = 0;
-    } else {
-      this.pencil = !this.pencil;
-    }
-    this.lastPencilTap = now;
-    this.render();
-  }
-
   tapErase() {
-    if (this.selectedCell >= 0 && this.inputMode() !== 'digit') {
+    if (this.selectedCell >= 0 && this.app.settings.input !== 'digit') {
       this.change(() => this.game.erase(this.selectedCell));
       return;
     }
@@ -215,8 +193,8 @@ export class PlayScreen {
     this.render();
   }
 
-  // Keyboard, for playing in a desktop browser: arrows move, digits enter, Shift and a digit
-  // count as a hold, P toggles the Pencil or Place button.
+  // Keyboard, for playing in a desktop browser: arrows move, a digit places it, Shift and a
+  // digit make a pencil mark, Backspace erases.
   key(event) {
     if (this.panel !== 'pad' || event.metaKey || event.ctrlKey) return;
     const moves = { ArrowUp: -9, ArrowDown: 9, ArrowLeft: -1, ArrowRight: 1 };
@@ -232,9 +210,6 @@ export class PlayScreen {
       this.act(this.selectedCell, digit, event.shiftKey);
     } else if ((event.key === 'Backspace' || event.key === 'Delete') && this.selectedCell >= 0) {
       this.change(() => this.game.erase(this.selectedCell));
-    } else if (event.key === 'p') {
-      this.pencil = !this.pencil;
-      this.render();
     } else {
       return;
     }
@@ -362,17 +337,18 @@ export class PlayScreen {
       return;
     }
 
-    if (this.controls.firstChild !== this.pad) this.controls.replaceChildren(this.pad, this.tools);
-    this.digitButtons.forEach((button, i) => {
-      const digit = i + 1;
-      button.textContent = digitLabel(digit, settings.font);
-      button.setAttribute('aria-label', `digit ${digit}`);
-      button.className = [digit === this.selectedDigit ? 'active' : '', game.digitCount(digit) === 9 ? 'complete' : ''].join(' ').trim();
-    });
+    if (this.controls.firstChild !== this.padsEl) this.controls.replaceChildren(this.padsEl, this.tools);
+    for (const { mode, buttons } of this.pads) {
+      buttons.forEach((button, i) => {
+        const digit = i + 1;
+        button.textContent = digitLabel(digit, settings.font);
+        button.setAttribute('aria-label', `${mode === 'mark' ? 'pencil mark' : 'digit'} ${digit}`);
+        const active = digit === this.selectedDigit && mode === this.selectedMode;
+        button.className = [active ? 'active' : '', game.digitCount(digit) === 9 ? 'complete' : ''].join(' ').trim();
+      });
+    }
     const solvable = settings.showSolvable ? (game.isSolvable() ? 'solvable' : 'unsolvable') : this.flash;
-    this.pad.className = `pad ${solvable}`.trim();
-    this.pencilButton.textContent = settings.tap === 'mark' ? 'Place' : 'Pencil';
-    this.pencilButton.className = this.rapid ? 'rapid' : this.pencil ? 'active' : '';
+    this.padsEl.className = `pads ${solvable}`.trim();
     this.eraseButton.className = this.erasing ? 'active' : '';
     this.undoButton.disabled = game.undoStack.length === 0;
     this.redoButton.disabled = game.redoStack.length === 0;

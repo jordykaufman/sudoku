@@ -111,7 +111,7 @@ table.stats th:first-child, table.stats td:first-child { text-align: left; }
 .topbar { width: 100%; display: flex; align-items: center; justify-content: space-between; min-height: 40px; }
 .topbar .title { font-weight: 600; }
 .topbar .clock { min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
-.board-wrap { position: relative; width: min(100%, calc(100dvh - 300px)); aspect-ratio: 1; container-type: inline-size; }
+.board-wrap { position: relative; width: min(100%, calc(100dvh - 340px)); aspect-ratio: 1; container-type: inline-size; }
 .board {
   width: 100%; height: 100%; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); gap: 2px; touch-action: manipulation;
   background: var(--line-thick); border: 2px solid var(--line-thick); border-radius: 6px; overflow: hidden;
@@ -162,18 +162,23 @@ table.stats th:first-child, table.stats td:first-child { text-align: left; }
 .cell.blink-digit { animation: blink-digit 0.45s 2; }
 
 .play .board-wrap { margin: auto 0; }
-.controls { width: min(100%, 480px); display: flex; flex-direction: column; gap: 10px; padding-bottom: 8px; }
-.pad { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; padding: 4px; border-radius: 12px; }
-.pad.solvable { background: var(--ok-bg); }
-.pad.unsolvable { background: var(--danger-bg); }
-.pad button { height: 56px; font-size: 24px; padding: 0; }
+.controls { width: min(100%, 480px); min-height: 246px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 8px; }
+/* Two keypads: large digits to place a digit, small digits for pencil marks. */
+.pads { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 4px; border-radius: 12px; }
+.pads.solvable { background: var(--ok-bg); }
+.pads.unsolvable { background: var(--danger-bg); }
+.pad-col { display: flex; flex-direction: column; gap: 4px; }
+.pad-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); text-align: center; }
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.pad button { height: 48px; font-size: 24px; padding: 0; }
+.pad.mark button { font-size: 16px; font-weight: 500; color: var(--mark); }
 .pad button.active { background: var(--active); color: var(--active-text); }
-.pad button.complete { color: var(--muted); }
-.tools { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.pad button.complete { color: var(--muted); opacity: 0.6; }
+.tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .tools button { height: 48px; font-size: 15px; padding: 0 2px; }
 .tools button.active { background: var(--active); color: var(--active-text); }
-.tools button.rapid { background: var(--rapid); color: #1d1d1f; }
 .panel { background: var(--panel); border-radius: 12px; padding: 12px; min-height: 112px; display: flex; flex-direction: column; gap: 8px; }
+.play .panel { flex: 1; }
 .panel .name { font-weight: 700; color: var(--link); background: none; padding: 0; text-align: left; }
 .panel .text { -webkit-user-select: text; user-select: text; }
 /* Hints for chains can run to 400 characters; keep the board and buttons on screen. */

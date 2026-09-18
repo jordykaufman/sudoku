@@ -4,8 +4,6 @@ import { load, save } from './storage.js';
 export const SETTINGS = [
   { key: 'input', label: 'Input', choices: [['hybrid', 'Either'], ['digit', 'Digit first'], ['cell', 'Cell first']], default: 'hybrid',
     help: 'Digit first: pick a digit, then tap cells. Cell first: pick a cell, then tap digits. Either: whichever you tap first.' },
-  { key: 'tap', label: 'Tap', choices: [['mark', 'Pencil mark'], ['place', 'Place the digit']], default: 'mark',
-    help: 'What a tap does once a digit and a cell are chosen. Holding for a moment does the other thing. The Pencil or Place button swaps the two.' },
   { key: 'pencil', label: 'Pencil marks', choices: [['manual', 'Manual'], ['erase', 'Auto erase'], ['auto', 'Automatic']], default: 'erase',
     help: 'Auto erase removes a pencil mark when you place that digit in the same row, column or block. Automatic shows every digit the placed digits allow; you can still turn marks off.' },
   { key: 'mistakes', label: 'Mark mistakes', choices: [['off', 'Off'], ['clash', 'Clashes'], ['wrong', 'Wrong digits']], default: 'clash',
