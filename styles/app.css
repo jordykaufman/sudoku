@@ -172,8 +172,8 @@ table.stats th:first-child, table.stats td:first-child { text-align: left; }
 .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .pad button { height: 48px; font-size: 24px; padding: 0; }
 .pad.mark button { font-size: 16px; font-weight: 500; color: var(--mark); }
+.pad button.complete { background: var(--ok-bg); color: var(--ok); } /* all nine placed */
 .pad button.active { background: var(--active); color: var(--active-text); }
-.pad button.complete { color: var(--muted); opacity: 0.6; }
 .tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .tools button { height: 48px; font-size: 15px; padding: 0 2px; }
 .tools button.active { background: var(--active); color: var(--active-text); }
