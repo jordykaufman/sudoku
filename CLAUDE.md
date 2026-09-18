@@ -25,7 +25,7 @@ A personal remake of the iPhone game Enjoy Sudoku.
 - Levels the manual lists without a new technique (`src/engine/rating.js`): Never Played to Super Simple need only Full House and are split by the number of empty cells; Diabolical is a puzzle whose hardest technique is Fiendish and that uses Fiendish techniques in 2 or more steps.
 - Time added for hints and other help: `HINT_PENALTY_SECONDS` in `src/engine/hint.js` and `PENALTY` in `src/app/game.js`.
 - Skin names, digit styles and the app icon.
-- Two optional highlights for the selected digit (settings Show singles and Show fish, `src/app/highlights.js`): a stronger colour on a cell that is the only place left for it in a row, column or block, and an outline on the cells of a basic X-Wing, Swordfish or Jellyfish for it, smallest first, with every base line holding at least two candidates.
+- Two optional highlights for the selected digit (settings Show singles and Show fish, `src/app/highlights.js`): a stronger colour on a cell that is the only place left for it in a row, column or block (holding that cell places the digit, `onPress` in `src/app/dom.js`), and an outline on the cells of a basic X-Wing, Swordfish or Jellyfish for it, smallest first, with every base line holding at least two candidates.
 - A key on either pad turns green once all nine of its digit are placed.
 
 ## Rules

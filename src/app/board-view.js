@@ -1,10 +1,10 @@
 import { BOX, COL, POPCOUNT, ROW, bit } from '../engine/grid.js';
-import { digitLabel, h } from './dom.js';
+import { digitLabel, h, onPress } from './dom.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const BLINK_MS = 950;
 
-// The 9x9 board. `onCell(cell)` is called when a cell is tapped.
+// The 9x9 board. `onCell(cell, held)` is called when a cell is tapped (held = false) or held.
 export class BoardView {
   constructor(onCell) {
     this.cells = [];
@@ -17,10 +17,7 @@ export class BoardView {
       const marks = Array.from({ length: 9 }, () => h('span', { class: 'mark' }));
       const marksEl = h('div', { class: 'marks' }, marks);
       const el = h('div', { class: 'cell', 'aria-label': `R${ROW[cell] + 1}C${COL[cell] + 1}` }, digit, marksEl);
-      el.addEventListener('pointerdown', (event) => {
-        event.preventDefault();
-        onCell(cell);
-      });
+      onPress(el, (held) => onCell(cell, held));
       boxes[BOX[cell]].append(el);
       this.cells.push({ el, digit, marks, marksEl });
     }

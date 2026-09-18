@@ -15,6 +15,7 @@ export class PlayScreen {
     this.selectedCell = -1;
     this.selectedDigit = 0;
     this.selectedMode = 'place'; // what the selected digit does to a cell: 'place' or 'mark'
+    this.singles = new Set(); // cells shown as the only place left for the highlighted digit
     this.erasing = false;
     this.panel = 'pad'; // 'pad', 'menu' (hint options) or 'hint'
     this.hint = null;
@@ -22,7 +23,7 @@ export class PlayScreen {
     this.flash = ''; // 'solvable' or 'unsolvable' for a moment after asking
     this.ticks = 0;
 
-    this.board = new BoardView((cell) => this.tapCell(cell));
+    this.board = new BoardView((cell, held) => this.tapCell(cell, held));
     this.board.onBlinkEnd = () => this.render();
     this.title = h('div', { class: 'title' });
     this.clock = h('div', { class: 'clock' });
@@ -124,10 +125,16 @@ export class PlayScreen {
     this.render();
   }
 
-  tapCell(cell) {
+  // `held` is true for a hold instead of a tap. Holding a cell shown as the only place left
+  // for the highlighted digit places that digit there; any other hold counts as a tap.
+  tapCell(cell, held = false) {
     if (this.panel !== 'pad' || this.game.finished) return;
     if (this.erasing) {
       this.change(() => this.game.erase(cell));
+      return;
+    }
+    if (held && this.singles.has(cell)) {
+      this.act(cell, this.highlightDigit(), false);
       return;
     }
     const input = this.app.settings.input;
@@ -275,13 +282,14 @@ export class PlayScreen {
     const stage = this.panel === 'hint' ? this.stages()[this.stageIndex] : null;
     const hl = this.highlightDigit();
     const extras = settings.highlight && hl && !stage && !game.finished;
+    this.singles = extras && settings.singles ? singleCells(game, hl) : new Set();
     this.board.render({
       game,
       settings,
       selectedCell: this.selectedCell,
       highlightDigit: hl,
       stage,
-      singles: extras && settings.singles ? singleCells(game, hl) : new Set(),
+      singles: this.singles,
       fish: extras && settings.fish ? fishCells(game, hl) : new Set(),
       clash: settings.mistakes === 'off' ? new Set() : game.clashCells(),
       wrong: settings.mistakes === 'wrong' ? game.wrongCells() : new Set(),
