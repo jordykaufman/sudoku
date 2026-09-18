@@ -252,7 +252,7 @@ test('X-Wing in rows (HoDoKu example)', () => {
     step.stages.map((stage) => stage.text),
     [
       'Consider the digit 5.',
-      'In row 2 and row 5, the candidates for 5 are all in the same two columns.',
+      'In row 2 and row 5, the candidates for 5 are all in column 5 and column 8.',
       'The 5s of row 2 and row 5 can only go in column 5 and column 8, and they cannot share a column. ' +
         'So column 5 and column 8 each have their 5 in one of those rows, and 5 can be removed from R4C5.',
     ],
@@ -348,10 +348,11 @@ test('Finned X-Wing in rows (HoDoKu example)', () => {
     step.stages.map((stage) => stage.text),
     [
       'Consider the digit 9.',
-      'In row 2 and row 4, the candidates for 9 are all in the same two columns, except R2C1, which is in block 1.',
-      'If R2C1 is not 9, the 9s of row 2 and row 4 can only go in column 3 and column 5, one in each column, ' +
+      'In row 2 and row 4, the only candidate for 9 outside column 3 and column 5 is R2C1, which is in block 1.',
+      'Either R2C1 is 9 or it is not. If R2C1 is not 9, the 9s of row 2 and row 4 are in column 3 and column 5, one in each column, ' +
         'so no other cell in those columns can be 9. ' +
-        'If R2C1 is 9, no other cell in block 1 can be 9, so either way 9 can be removed from R3C3.',
+        'If R2C1 is 9, no other cell in block 1 can be 9. ' +
+        'R3C3 is in those columns and in block 1, so either way 9 can be removed from R3C3.',
     ],
   );
 });
@@ -451,11 +452,12 @@ test('Sashimi X-Wing in columns (HoDoKu example)', () => {
     step.stages.map((stage) => stage.text),
     [
       'Consider the digit 3.',
-      'In column 3 and column 6, the candidates for 3 are all in the same two rows, except R8C3 and R9C3, which are both in block 7. ' +
-        'Column 3 has only one candidate for 3 in those rows.',
-      'If neither R8C3 nor R9C3 is 3, the 3s of column 3 and column 6 can only go in row 3 and row 7, one in each row, ' +
+      'In column 3 and column 6, the only candidates for 3 outside row 3 and row 7 are R8C3 and R9C3, which are both in block 7. ' +
+        'Column 3 has only one candidate for 3 in those rows: R3C3.',
+      'Either one of R8C3 and R9C3 is 3, or neither is. If neither R8C3 nor R9C3 is 3, the 3s of column 3 and column 6 are in row 3 and row 7, one in each row, ' +
         'so no other cell in those rows can be 3. ' +
-        'If R8C3 or R9C3 is 3, no other cell in block 7 can be 3, so either way 3 can be removed from R7C1.',
+        'If R8C3 or R9C3 is 3, no other cell in block 7 can be 3. ' +
+        'R7C1 is in those rows and in block 7, so either way 3 can be removed from R7C1.',
     ],
   );
 });

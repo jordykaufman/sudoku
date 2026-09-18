@@ -197,7 +197,7 @@ function fishStep({ id, digit, o, masks, base, cover, fins, block, thin, elimina
   let result;
   if (!fins.length) {
     const apart = base.lines.length === 2 ? 'they cannot share' : 'no two of them can share';
-    pattern = `In ${baseText}, the candidates for ${digit} are all in the same ${n} ${o.cover}s.`;
+    pattern = `In ${baseText}, the candidates for ${digit} are all in ${coverText}.`;
     result =
       `The ${digit}s of ${baseText} can only go in ${coverText}, and ${apart} a ${o.cover}. ` +
       `So ${coverText} each have their ${digit} in one of those ${o.base}s, and ${digit} can be removed from ${cellList(targets)}.`;
@@ -205,27 +205,36 @@ function fishStep({ id, digit, o, masks, base, cover, fins, block, thin, elimina
     const blockName = houseName(18 + block);
     const finNames = cellList(fins);
     const inBlock = fins.length === 1 ? 'which is in' : fins.length === 2 ? 'which are both in' : 'which are all in';
-    pattern = `In ${baseText}, the candidates for ${digit} are all in the same ${n} ${o.cover}s, except ${finNames}, ${inBlock} ${blockName}.`;
+    pattern =
+      `In ${baseText}, the only ${fins.length === 1 ? 'candidate' : 'candidates'} for ${digit} outside ${coverText} ` +
+      `${fins.length === 1 ? 'is' : 'are'} ${finNames}, ${inBlock} ${blockName}.`;
     if (thin.length) {
       const thinText = capitalize(joinList(thin.map((line) => houseName(o.baseHouse(line)))));
-      pattern += ` ${thinText} ${thin.length === 1 ? 'has' : 'each have'} only one candidate for ${digit} in those ${o.cover}s.`;
+      const thinCells = cellList(thin.map((line) => o.cell(line, POSITIONS[masks[line] & cover][0])));
+      pattern += ` ${thinText} ${thin.length === 1 ? 'has' : 'each have'} only one candidate for ${digit} in those ${o.cover}s: ${thinCells}.`;
     }
+    let either;
     let noFin;
     let aFin;
     if (fins.length === 1) {
+      either = `Either ${finNames} is ${digit} or it is not.`;
       noFin = `${finNames} is not`;
       aFin = `${finNames} is`;
     } else if (fins.length === 2) {
+      either = `Either one of ${finNames} is ${digit}, or neither is.`;
       noFin = `neither ${cellName(fins[0])} nor ${cellName(fins[1])} is`;
       aFin = `${cellName(fins[0])} or ${cellName(fins[1])} is`;
     } else {
+      either = `Either one of ${finNames} is ${digit}, or none of them is.`;
       noFin = `none of ${finNames} is`;
       aFin = `one of ${finNames} is`;
     }
+    const targetText = cellList(targets);
     result =
-      `If ${noFin} ${digit}, the ${digit}s of ${baseText} can only go in ${coverText}, one in each ${o.cover}, ` +
+      `${either} If ${noFin} ${digit}, the ${digit}s of ${baseText} are in ${coverText}, one in each ${o.cover}, ` +
       `so no other cell in those ${o.cover}s can be ${digit}. ` +
-      `If ${aFin} ${digit}, no other cell in ${blockName} can be ${digit}, so either way ${digit} can be removed from ${cellList(targets)}.`;
+      `If ${aFin} ${digit}, no other cell in ${blockName} can be ${digit}. ` +
+      `${targetText} ${targets.length === 1 ? 'is' : 'are'} in those ${o.cover}s and in ${blockName}, so either way ${digit} can be removed from ${targetText}.`;
   }
 
   return {
