@@ -9,7 +9,8 @@ import { findBasicFishFor } from '../engine/techniques/fish.js';
 // digits allow when it shows none. Hints read the board the same way.
 const seen = (game, cell) => (game.values[cell] ? 0 : game.shownMarks(cell) || game.allowed(cell));
 
-// Cells where `digit` is the only place left in a row, a column or a block.
+// Cells where `digit` must go: the only place left for it in a row, a column or a block,
+// or a cell whose only candidate it is.
 export function singleCells(game, digit) {
   const cells = new Set();
   const b = bit(digit);
@@ -26,6 +27,7 @@ export function singleCells(game, digit) {
     }
     if (!placed && count === 1) cells.add(only);
   }
+  for (let cell = 0; cell < 81; cell++) if (!game.values[cell] && seen(game, cell) === b) cells.add(cell);
   return cells;
 }
 

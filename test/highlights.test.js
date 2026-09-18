@@ -83,6 +83,14 @@ test('single cells are where a digit has one place left in a row, column or bloc
   assert.deepEqual(sorted(singleCells(block, 5)), [23, 35, 40]);
 });
 
+test('a cell whose only pencil mark is the digit is a single too', () => {
+  // R2C4 keeps only its 1. Its row, column and block each still have another 1, so it is a
+  // single only because nothing else can go there.
+  const view = viewOf(Board.fromCandidateGrid(XWING.replace('| 7   6   9 | 18   158  3', '| 7   6   9 | (1)  158  3')));
+  assert.deepEqual(sorted(singleCells(view, 1)), [12]);
+  assert.equal(singleCells(view, 5).size, 0);
+});
+
 test('a cell without pencil marks counts as every digit the placed digits allow', () => {
   const board = Board.fromCandidateGrid(XWING);
   const view = { ...viewOf(board), shownMarks: () => 0, allowed: (cell) => board.cands[cell] };
