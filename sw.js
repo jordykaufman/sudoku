@@ -1,7 +1,7 @@
 // Offline support: caches every file the app needs, answers requests from the cache first,
 // and replaces the cache when VERSION changes. test/sw.test.js checks that FILES lists every
 // file the app loads.
-const VERSION = '20260917-1618';
+const VERSION = '20260918-0032';
 const CACHE = `sudoku-${VERSION}`;
 const FILES = [
   './',
@@ -16,6 +16,7 @@ const FILES = [
   'src/app/board-view.js',
   'src/app/dom.js',
   'src/app/game.js',
+  'src/app/highlights.js',
   'src/app/learn.js',
   'src/app/main.js',
   'src/app/play.js',

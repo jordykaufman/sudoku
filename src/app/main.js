@@ -6,7 +6,7 @@ import { Game } from './game.js';
 import { LessonScreen } from './learn.js';
 import { PlayScreen } from './play.js';
 import { getPuzzle, today } from './puzzles.js';
-import { SETTINGS, loadSettings, resolveSkin, saveSettings } from './settings.js';
+import { SETTINGS, loadSettings, saveSettings } from './settings.js';
 import { dailyDone, loadStats, recordFinish, recordStart, resetStats } from './stats.js';
 import { load, remove, save } from './storage.js';
 
@@ -48,11 +48,8 @@ const row = (label, sub, onclick, extra = '') =>
 
 const back = (onclick) => h('button', { class: 'link', onclick }, '‹ Back');
 
-const darkMode = window.matchMedia?.('(prefers-color-scheme: dark)') ?? null;
-
 function applyAppearance() {
-  const skin = resolveSkin(app.settings.skin, darkMode?.matches ?? false);
-  document.documentElement.className = `skin-${skin} font-${app.settings.font}`;
+  document.documentElement.className = `skin-${app.settings.skin} font-${app.settings.font}`;
   const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg);
 }
@@ -290,7 +287,6 @@ function showLesson(id, onBack) {
 
 function boot() {
   applyAppearance();
-  darkMode?.addEventListener('change', applyAppearance);
   const current = load('current', null);
   if (current) {
     try {

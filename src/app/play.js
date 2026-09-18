@@ -3,6 +3,7 @@ import { LEVELS } from '../engine/levels.js';
 import { techniqueById } from '../engine/techniques/index.js';
 import { BoardView } from './board-view.js';
 import { digitLabel, formatTime, h, onPress } from './dom.js';
+import { fishCells, singleCells } from './highlights.js';
 
 const DOUBLE_TAP_MS = 350;
 
@@ -297,12 +298,16 @@ export class PlayScreen {
     this.title.textContent = `${LEVELS[game.level].name}${game.kind === 'daily' ? ' · Daily' : ''}`;
     this.updateClock();
     const stage = this.panel === 'hint' ? this.stages()[this.stageIndex] : null;
+    const hl = this.highlightDigit();
+    const extras = settings.highlight && hl && !stage && !game.finished;
     this.board.render({
       game,
       settings,
       selectedCell: this.selectedCell,
-      highlightDigit: this.highlightDigit(),
+      highlightDigit: hl,
       stage,
+      singles: extras && settings.singles ? singleCells(game, hl) : new Set(),
+      fish: extras && settings.fish ? fishCells(game, hl) : new Set(),
       clash: settings.mistakes === 'off' ? new Set() : game.clashCells(),
       wrong: settings.mistakes === 'wrong' ? game.wrongCells() : new Set(),
     });

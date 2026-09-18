@@ -12,6 +12,10 @@ export const SETTINGS = [
     help: 'Clashes shows a digit in red when its row, column or block already has it. Wrong digits shows any digit that is not in the solution, and adds time for each one.' },
   { key: 'highlight', label: 'Highlight', type: 'switch', default: true,
     help: 'Shades the cells that hold the selected digit, and the cells with a pencil mark for it.' },
+  { key: 'singles', label: 'Show singles', type: 'switch', default: true,
+    help: 'With a digit highlighted, a cell that is the only place left for it in its row or column gets a stronger colour.' },
+  { key: 'fish', label: 'Show fish', type: 'switch', default: true,
+    help: 'With a digit highlighted, outlines the cells of an X-Wing or Swordfish for it that removes a pencil mark.' },
   { key: 'clock', label: 'Clock', choices: [['never', 'Hidden'], ['end', 'At the end'], ['always', 'Always']], default: 'always' },
   { key: 'showSolvable', label: 'Show solvable', type: 'switch', default: false,
     help: 'Colours the digit buttons green while the board can still be finished and red after a wrong digit. Adds time for each wrong move.' },
@@ -21,16 +25,13 @@ export const SETTINGS = [
   { key: 'keepSaved', label: 'Keep saved positions', type: 'switch', default: false,
     help: 'When off, a saved position is deleted once you restore it.' },
   { key: 'awake', label: 'Keep screen on', type: 'switch', default: false },
-  { key: 'skin', label: 'Skin', choices: [['auto', 'Follow phone'], ['paper', 'Paper'], ['sand', 'Sand'], ['sea', 'Sea'], ['slate', 'Slate'], ['night', 'Night'], ['contrast', 'Contrast']], default: 'paper',
-    help: 'Follow phone uses Paper, or Night when the phone is in dark mode.' },
+  { key: 'skin', label: 'Skin', choices: [['paper', 'Paper'], ['sand', 'Sand'], ['sea', 'Sea'], ['slate', 'Slate'], ['night', 'Night'], ['contrast', 'Contrast']], default: 'paper' },
   { key: 'font', label: 'Digits', choices: [['regular', '1 2 3'], ['bold', 'Bold'], ['serif', 'Serif'], ['kanji', '一 二 三']], default: 'regular' },
   { key: 'markStyle', label: 'Pencil mark style', choices: [['grid', 'Fixed grid'], ['variable', 'Grow when few']], default: 'grid' },
 ];
 
 const DEFAULTS = Object.fromEntries(SETTINGS.map((s) => [s.key, s.default]));
 
-// The skin class to use: 'auto' follows the phone's dark mode.
-export const resolveSkin = (skin, dark) => (skin === 'auto' ? (dark ? 'night' : 'paper') : skin);
 
 export function loadSettings() {
   return { ...DEFAULTS, ...load('settings', {}) };

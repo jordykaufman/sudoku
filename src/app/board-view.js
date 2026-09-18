@@ -26,10 +26,11 @@ export class BoardView {
     this.el = h('div', { class: 'board-wrap' }, h('div', { class: 'board' }, boxes), this.links);
   }
 
-  // view: { game, settings, selectedCell, highlightDigit, stage, wrong, clash }
+  // view: { game, settings, selectedCell, highlightDigit, stage, wrong, clash, singles, fish }
   // `stage` is the hint stage being shown, or null. While a hint is shown its highlights
-  // replace the normal selection and digit highlighting.
-  render({ game, settings, selectedCell = -1, highlightDigit = 0, stage = null, wrong = new Set(), clash = new Set() }) {
+  // replace the normal selection and digit highlighting. `singles` and `fish` are cells to
+  // mark for the highlighted digit (src/app/highlights.js); they are ignored during a hint.
+  render({ game, settings, selectedCell = -1, highlightDigit = 0, stage = null, wrong = new Set(), clash = new Set(), singles = new Set(), fish = new Set() }) {
     const houses = new Set(stage?.houses ?? []);
     const cellRoles = new Map((stage?.cells ?? []).map(([cell, role]) => [cell, role]));
     const markRoles = new Map((stage?.marks ?? []).map(([cell, digit, role]) => [cell * 10 + digit, role]));
@@ -53,6 +54,8 @@ export class BoardView {
       if (!stage && cell === selectedCell) cls.push('selected');
       if (hl && value === hl) cls.push('hl-digit');
       if (hl && shown & bit(hl)) cls.push('hl-mark');
+      if (hl && !stage && singles.has(cell)) cls.push('hl-single');
+      if (hl && !stage && fish.has(cell)) cls.push('hl-fish');
       const role = cellRoles.get(cell);
       if (role) cls.push(role === 'a' || role === 'b' ? `color-${role}` : role);
       if (value && !game.isGiven(cell) && (wrong.has(cell) || clash.has(cell))) cls.push('wrong');

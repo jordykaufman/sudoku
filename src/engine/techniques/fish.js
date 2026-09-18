@@ -59,9 +59,10 @@ const ORIENTATIONS = [
 // Calls `visit` for every digit, orientation and set of `size` base lines in which the
 // digit is not placed and every line has a candidate for it, and returns the first step
 // `visit` returns. `masks[line]` holds the positions of the digit's candidates in each line,
-// and `union` the positions of the candidates in the base lines.
-function search(board, size, visit) {
-  for (let digit = 1; digit <= 9; digit++) {
+// and `union` the positions of the candidates in the base lines. `only` limits the search
+// to one digit.
+function search(board, size, visit, only = 0) {
+  for (let digit = only || 1; digit <= (only || 9); digit++) {
     const b = bit(digit);
     for (const o of ORIENTATIONS) {
       const masks = new Uint16Array(9);
@@ -89,7 +90,7 @@ function search(board, size, visit) {
 }
 
 // Basic fish: every candidate in the base lines is in the cover lines.
-function findBasicFish(board, size, id) {
+function findBasicFish(board, size, id, only = 0) {
   return search(board, size, ({ digit, o, masks, base, union }) => {
     if (POPCOUNT[union] !== size) return null;
     const eliminations = [];
@@ -99,7 +100,13 @@ function findBasicFish(board, size, id) {
     }
     if (!eliminations.length) return null;
     return fishStep({ id, digit, o, masks, base, cover: union, fins: [], block: -1, thin: [], eliminations });
-  });
+  }, only);
+}
+
+// The first X-Wing, or else Swordfish, for `digit` that removes a candidate. The board
+// highlights its cells when the digit is selected.
+export function findBasicFishFor(board, digit) {
+  return findBasicFish(board, 2, 'x-wing', digit) ?? findBasicFish(board, 3, 'swordfish', digit);
 }
 
 // Finned and sashimi fish. The cover lines are chosen from the lines that hold candidates
