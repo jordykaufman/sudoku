@@ -1,9 +1,18 @@
-import { ROW } from '../engine/grid.js';
+import { DIGITS, POPCOUNT, ROW } from '../engine/grid.js';
 import { LEVELS } from '../engine/levels.js';
 import { techniqueById } from '../engine/techniques/index.js';
 import { BoardView } from './board-view.js';
 import { digitLabel, formatTime, h } from './dom.js';
 import { fishCells, singleCells } from './highlights.js';
+
+// The digit a hold on a cell places, or 0 when the hold should count as a tap. A cell with
+// one pencil mark left can only be that digit, whatever is highlighted; otherwise the cell
+// has to be shown as the only place left for the highlighted digit.
+export function holdDigit({ value, marks, single, highlightDigit }) {
+  if (value) return 0;
+  if (POPCOUNT[marks] === 1) return DIGITS[marks][0];
+  return single ? highlightDigit : 0;
+}
 
 
 // The game screen. `app` provides: settings, saveGame(game), finishGame(game), openMenu()
@@ -125,17 +134,25 @@ export class PlayScreen {
     this.render();
   }
 
-  // `held` is true for a hold instead of a tap. Holding a cell shown as the only place left
-  // for the highlighted digit places that digit there; any other hold counts as a tap.
+  // `held` is true for a hold instead of a tap. Holding a cell places the digit it must
+  // hold, when there is one; any other hold counts as a tap.
   tapCell(cell, held = false) {
     if (this.panel !== 'pad' || this.game.finished) return;
     if (this.erasing) {
       this.change(() => this.game.erase(cell));
       return;
     }
-    if (held && this.singles.has(cell)) {
-      this.act(cell, this.highlightDigit(), false);
-      return;
+    if (held) {
+      const digit = holdDigit({
+        value: this.game.values[cell],
+        marks: this.game.shownMarks(cell),
+        single: this.singles.has(cell),
+        highlightDigit: this.highlightDigit(),
+      });
+      if (digit) {
+        this.act(cell, digit, false);
+        return;
+      }
     }
     const input = this.app.settings.input;
     if (input !== 'cell' && this.selectedDigit) {

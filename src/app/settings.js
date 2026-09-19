@@ -11,7 +11,7 @@ export const SETTINGS = [
   { key: 'highlight', label: 'Highlight', type: 'switch', default: true,
     help: 'Shades the cells that hold the selected digit, and the cells with a pencil mark for it.' },
   { key: 'singles', label: 'Show singles', type: 'switch', default: true,
-    help: 'With a digit highlighted, a cell that is the only place left for it in its row, column or block, or whose only pencil mark is that digit, gets a stronger colour. Hold such a cell to place the digit.' },
+    help: 'With a digit highlighted, a cell that is the only place left for it in its row, column or block, or whose only pencil mark is that digit, gets a stronger colour. Holding such a cell places the digit. A cell with one pencil mark left can always be filled by holding it, whether or not a digit is highlighted.' },
   { key: 'fish', label: 'Show fish', type: 'switch', default: true,
     help: 'With a digit highlighted, outlines the cells of an X-Wing, Swordfish or Jellyfish for it that removes a pencil mark: two, three or four rows whose candidates for the digit all sit in as many columns, or the other way round.' },
   { key: 'clock', label: 'Clock', choices: [['never', 'Hidden'], ['end', 'At the end'], ['always', 'Always']], default: 'always' },
