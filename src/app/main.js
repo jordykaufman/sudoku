@@ -299,13 +299,44 @@ function boot() {
   if (app.game && !app.game.finished) resumeGame();
   else showHome();
 
-  window.addEventListener('pagehide', () => {
-    if (app.screen === app.play) app.play?.tick();
-    if (app.game) app.saveGame(app.game);
-  });
+  window.addEventListener('pagehide', saveProgress);
 
+  keepUpdated();
+}
+
+function saveProgress() {
+  if (app.screen === app.play) app.play?.tick();
+  if (app.game) app.saveGame(app.game);
+}
+
+// Keeps an installed copy up to date. Tapping the Home Screen icon usually resumes the page
+// that is already running, so the app asks the service worker to look for new files whenever
+// it comes to the foreground. The worker replaces its cache as soon as it has them all and
+// takes over, and the app then saves the game and loads the new files.
+function keepUpdated() {
   const local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  if ('serviceWorker' in navigator && !local) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if (!('serviceWorker' in navigator) || local) return;
+  // Without a worker yet, the first one takes over with nothing new to show.
+  const hadWorker = Boolean(navigator.serviceWorker.controller);
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadWorker || reloading) return;
+    reloading = true;
+    saveProgress();
+    location.reload();
+  });
+  navigator.serviceWorker
+    .register('sw.js', { updateViaCache: 'none' })
+    .then((registration) => {
+      const check = () => {
+        if (!document.hidden) registration.update().catch(() => {});
+      };
+      document.addEventListener('visibilitychange', check);
+      check();
+    })
+    .catch(() => {
+      // No service worker: the app still runs, but only online.
+    });
 }
 
 boot();
