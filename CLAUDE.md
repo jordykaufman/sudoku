@@ -27,6 +27,7 @@ A personal remake of the iPhone game Enjoy Sudoku.
 - Skin names, digit styles and the app icon.
 - Two optional highlights for the selected digit (settings Show singles and Show fish, `src/app/highlights.js`): a stronger colour on a cell that is the only place left for it in a row, column or block, or whose only pencil mark it is (holding that cell places the digit, `holdDigit` in `src/app/play.js` and `onPress` in `src/app/dom.js`; a cell with one pencil mark left is filled by a hold even with nothing highlighted), and an outline on the cells of a basic X-Wing, Swordfish or Jellyfish for it, smallest first, with every base line holding at least two candidates.
 - A key on either pad turns green once all nine of its digit are placed.
+- Check the board, on the hint menu (`checkWork` in `src/engine/hint.js`): names the cells holding a wrong digit, the cells whose pencil marks leave out their answer, and the pencil marks for digits already placed in the same row, column or block. A cell without pencil marks claims nothing, so it is never a mistake, and a mark problem that a wrong digit explains is left out, so the check names causes rather than consequences. Time is added once per position, and only when something is wrong.
 
 ## Rules
 

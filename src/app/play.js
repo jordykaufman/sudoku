@@ -26,8 +26,9 @@ export class PlayScreen {
     this.selectedMode = 'place'; // what the selected digit does to a cell: 'place' or 'mark'
     this.singles = new Set(); // cells shown as the only place left for the highlighted digit
     this.erasing = false;
-    this.panel = 'pad'; // 'pad', 'menu' (hint options) or 'hint'
+    this.panel = 'pad'; // 'pad', 'menu' (hint options), 'hint' or 'check'
     this.hint = null;
+    this.check = null; // the result of Check the board, while it is shown
     this.stageIndex = 0;
     this.flash = ''; // 'solvable' or 'unsolvable' for a moment after asking
     this.ticks = 0;
@@ -267,6 +268,18 @@ export class PlayScreen {
     this.render();
   }
 
+  showCheck() {
+    this.check = this.game.checkWork();
+    this.panel = 'check';
+    this.afterChange();
+  }
+
+  closeCheck() {
+    this.check = null;
+    this.panel = 'pad';
+    this.render();
+  }
+
   askSolvable() {
     this.flash = this.game.askSolvable() ? 'solvable' : 'unsolvable';
     clearTimeout(this.flashTimer);
@@ -296,7 +309,8 @@ export class PlayScreen {
     const settings = this.app.settings;
     this.title.textContent = `${LEVELS[game.level].name}${game.kind === 'daily' ? ' · Daily' : ''}`;
     this.updateClock();
-    const stage = this.panel === 'hint' ? this.stages()[this.stageIndex] : null;
+    // The check result highlights its cells the way a hint stage does.
+    const stage = this.panel === 'hint' ? this.stages()[this.stageIndex] : this.panel === 'check' ? this.check : null;
     const hl = this.highlightDigit();
     const extras = settings.highlight && hl && !stage && !game.finished;
     this.singles = extras && settings.singles ? singleCells(game, hl) : new Set();
@@ -309,7 +323,9 @@ export class PlayScreen {
       singles: this.singles,
       fish: extras && settings.fish ? fishCells(game, hl) : new Set(),
       clash: settings.mistakes === 'off' ? new Set() : game.clashCells(),
-      wrong: settings.mistakes === 'wrong' ? game.wrongCells() : new Set(),
+      // While the check is shown, the digits it calls wrong are drawn in red whatever the
+      // Mark mistakes setting says.
+      wrong: this.panel === 'check' ? new Set(this.check.wrong) : settings.mistakes === 'wrong' ? game.wrongCells() : new Set(),
     });
     this.renderControls();
   }
@@ -340,6 +356,18 @@ export class PlayScreen {
       return;
     }
 
+    if (this.panel === 'check') {
+      this.controls.replaceChildren(
+        h(
+          'div',
+          { class: 'panel' },
+          h('div', { class: 'text' }, this.check.text),
+          h('div', { class: 'buttons' }, h('button', { onclick: () => this.closeCheck() }, 'Done')),
+        ),
+      );
+      return;
+    }
+
     if (this.panel === 'menu') {
       const done = (action) => () => {
         action();
@@ -348,6 +376,7 @@ export class PlayScreen {
       };
       const items = [
         ['Hint', () => this.showHint()],
+        ['Check the board', () => this.showCheck()],
         !settings.showSolvable && ['Is the board solvable?', () => this.askSolvable()],
         ['Undo until solvable', done(() => game.undoUntilSolvable())],
         settings.pencil !== 'auto' && ['Fill in pencil marks', done(() => game.fillMarks())],

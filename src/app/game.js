@@ -1,5 +1,5 @@
 import { ALL, BOX, COL, HOUSES, PEERS, ROW, bit } from '../engine/grid.js';
-import { HINT_PENALTY_SECONDS, findHint } from '../engine/hint.js';
+import { HINT_PENALTY_SECONDS, checkWork, findHint } from '../engine/hint.js';
 
 // Seconds added to the clock for help other than hints. These numbers are this app's own.
 export const PENALTY = {
@@ -8,6 +8,7 @@ export const PENALTY = {
   undoUntilSolvable: 60,
   wrongDigit: 10, // each wrong digit shown in red when Mark mistakes is set to wrong digits
   unsolvableMove: 10, // each move that makes the board unsolvable while Show solvable is on
+  check: 30, // Check the board, when it finds a mistake
   mistakeHint: 10, // a hint that points out a mistake
   stuckHint: 60, // a hint that gives a digit because no technique applies
 };
@@ -60,6 +61,7 @@ export class Game {
     this.redoStack = data.redo ?? [];
     this.charged = new Set(data.charged ?? []);
     this.lastHint = data.lastHint ?? null;
+    this.lastCheck = data.lastCheck ?? null;
   }
 
   toJSON() {
@@ -82,6 +84,7 @@ export class Game {
       redo: this.redoStack.slice(-400),
       charged: [...this.charged],
       lastHint: this.lastHint,
+      lastCheck: this.lastCheck,
     };
   }
 
@@ -268,6 +271,23 @@ export class Game {
       if (result.kind === 'step') this.penalty += HINT_PENALTY_SECONDS[result.level] ?? 0;
       else if (result.kind === 'mistake') this.penalty += PENALTY.mistakeHint;
       else this.penalty += PENALTY.stuckHint;
+    }
+    return result;
+  }
+
+  // Checks the placed digits and the pencil marks against the solution. Time is added once
+  // per position, and only when something is wrong.
+  checkWork() {
+    const result = checkWork({
+      values: Uint8Array.from(this.values),
+      givens: Uint8Array.from(this.givens),
+      solution: Uint8Array.from(this.solution),
+      marks: Uint16Array.from({ length: 81 }, (_, cell) => this.shownMarks(cell)),
+    });
+    const position = this.snapshot();
+    if (result.problems && this.lastCheck !== position) {
+      this.lastCheck = position;
+      this.penalty += PENALTY.check;
     }
     return result;
   }

@@ -1,8 +1,8 @@
 import { Board } from './board.js';
-import { BOX, POPCOUNT, bit } from './grid.js';
+import { BOX, DIGITS, PEERS, POPCOUNT, bit } from './grid.js';
 import { TECHNIQUE_LEVEL } from './levels.js';
 import { nextStep } from './logic.js';
-import { cellName, houseName } from './text.js';
+import { cellList, cellName, houseName, plural, removalText } from './text.js';
 
 // Seconds added to the game clock for a hint, by the index of the level of the technique
 // the hint describes. The Enjoy Sudoku manuals say harder techniques add more time; these
@@ -74,5 +74,65 @@ export function findHint({ values, givens, solution, marks = new Uint16Array(81)
       { text: `Look at ${cellName(cell)}.`, cells: [[cell, 'key']] },
       { text: `${cellName(cell)} is ${solution[cell]}.`, cells: [[cell, 'target']], marks: [[cell, solution[cell], 'place']] },
     ],
+  };
+}
+
+// Checks everything the player has done against the solution, for the Check the board item on
+// the hint menu. `position` is what findHint takes. Three kinds of mistake are reported: a
+// placed digit that is not the solution, a cell whose pencil marks leave out its answer, and a
+// pencil mark for a digit that is already placed in the cell's row, column or block. A cell
+// without pencil marks claims nothing, so it is never a mistake.
+//
+// Returns { problems, text, cells, marks }, where `problems` counts the mistakes and `cells`
+// and `marks` highlight them the way a hint's stages do.
+export function checkWork({ values, givens, solution, marks = new Uint16Array(81) }) {
+  const wrong = [];
+  const missing = [];
+  const stale = [];
+  let marked = 0;
+  for (let cell = 0; cell < 81; cell++) {
+    if (values[cell]) {
+      if (!givens[cell] && values[cell] !== solution[cell]) wrong.push(cell);
+      continue;
+    }
+    if (!marks[cell]) continue;
+    marked++;
+    // A wrong digit takes its own digit out of the marks of the cells it sees, and can make
+    // other marks look impossible. Those are consequences of the wrong digit, not separate
+    // mistakes, so a mark problem is reported only when no wrong digit explains it.
+    const heldByMistake = (digit) => PEERS[cell].some((peer) => values[peer] === digit && values[peer] !== solution[peer]);
+    const heldRightly = (digit) => PEERS[cell].some((peer) => values[peer] === digit && values[peer] === solution[peer]);
+    const answer = solution[cell];
+    if (!(marks[cell] & bit(answer)) && !heldByMistake(answer)) missing.push(cell);
+    for (const digit of DIGITS[marks[cell]]) {
+      if (heldRightly(digit)) stale.push([cell, digit]);
+    }
+  }
+
+  const sentences = [];
+  if (wrong.length) sentences.push(`${cellList(wrong)} ${plural(wrong.length, 'holds a wrong digit', 'hold wrong digits')}.`);
+  else sentences.push('Every digit on the board is right.');
+  if (missing.length) {
+    sentences.push(
+      `${cellList(missing)} ${plural(missing.length, 'has no pencil mark for its answer', 'have no pencil mark for their answer')}.`,
+    );
+  }
+  if (stale.length) {
+    sentences.push(
+      `${plural(stale.length, 'One pencil mark is', 'Some pencil marks are')} for ${plural(stale.length, 'a digit', 'digits')} ` +
+        `already placed in the same row, column or block. ${removalText(stale)}`,
+    );
+  }
+  if (!missing.length && !stale.length && marked) sentences.push('The pencil marks are right too.');
+
+  return {
+    problems: wrong.length + missing.length + stale.length,
+    wrong,
+    missing,
+    stale,
+    text: sentences.join(' '),
+    // `mistake` is this check's own cell role, drawn in the colour of a wrong digit.
+    cells: wrong.map((cell) => [cell, 'mistake']).concat(missing.map((cell) => [cell, 'key'])),
+    marks: missing.map((cell) => [cell, solution[cell], 'place']).concat(stale.map(([cell, digit]) => [cell, digit, 'elim'])),
   };
 }
