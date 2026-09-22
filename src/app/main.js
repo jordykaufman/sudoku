@@ -5,6 +5,7 @@ import { formatTime, h } from './dom.js';
 import { Game } from './game.js';
 import { LessonScreen } from './learn.js';
 import { PlayScreen } from './play.js';
+import { PracticeScreen } from './practice.js';
 import { getPuzzle, today } from './puzzles.js';
 import { SETTINGS, loadSettings, saveSettings } from './settings.js';
 import { dailyDone, loadStats, recordFinish, recordStart, resetStats } from './stats.js';
@@ -30,6 +31,9 @@ const app = {
   },
   openLesson(id) {
     showLesson(id, resumeGame);
+  },
+  openPractice(id) {
+    showPractice(id, () => showLesson(id, () => showLearn(showHome)));
   },
 };
 
@@ -70,6 +74,7 @@ function showHome() {
         game && !game.finished && row('Save this position', 'You can come back to it with Restore', savePosition),
         saved && row('Restore saved position', `${LEVELS[saved.level].name} · ${formatTime(Math.floor(saved.elapsed / 1000) + saved.penalty)}`, restoreSaved),
         row('Learn', 'The techniques, level by level', () => showLearn(showHome)),
+        row('Practice', 'One technique, position after position', () => showPracticeList(showHome)),
         row('Statistics', null, showStats),
         row('Settings', null, showSettings),
       ),
@@ -255,8 +260,9 @@ function showStats() {
   );
 }
 
-function showLearn(onBack) {
-  const sections = LEVELS.flatMap((level, index) => {
+// The techniques, grouped by the level that adds them. `onPick(id)` opens one.
+function techniqueSections(onPick) {
+  return LEVELS.flatMap((level, index) => {
     const ids = ORDER.filter((id) => TECHNIQUE_LEVEL.get(id) === index);
     if (!ids.length) return [];
     return [
@@ -266,19 +272,39 @@ function showLearn(onBack) {
         { class: 'list' },
         ids.map((id) => {
           const technique = techniqueById(id);
-          return row(technique?.name ?? id, technique ? null : 'Not written yet', technique && (() => showLesson(id, () => showLearn(onBack))));
+          return row(technique?.name ?? id, technique ? null : 'Not written yet', technique && (() => onPick(id)));
         }),
       ),
     ];
   });
+}
+
+function showLearn(onBack) {
   show(
     page(
       back(onBack),
       h('h1', {}, 'Learn'),
       h('p', {}, 'Each level adds the techniques listed under it. A level can also need any technique from an easier level.'),
-      sections,
+      techniqueSections((id) => showLesson(id, () => showLearn(onBack))),
     ),
   );
+}
+
+function showPracticeList(onBack) {
+  show(
+    page(
+      back(onBack),
+      h('h1', {}, 'Practice'),
+      h('p', {}, 'Pick a technique. Each position has that technique in it, waiting to be found and played. Use Pattern to have it marked for you, and practise making the move alone.'),
+      techniqueSections(showPracticeFromList(onBack)),
+    ),
+  );
+}
+
+const showPracticeFromList = (onBack) => (id) => showPractice(id, () => showPracticeList(onBack));
+
+function showPractice(id, onBack) {
+  if (techniqueById(id)) show(new PracticeScreen(app, id, onBack));
 }
 
 function showLesson(id, onBack) {

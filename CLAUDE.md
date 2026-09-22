@@ -27,6 +27,8 @@ A personal remake of the iPhone game Enjoy Sudoku.
 - Skin names, digit styles and the app icon.
 - Two optional highlights for the selected digit (settings Show singles and Show fish, `src/app/highlights.js`): a stronger colour on a cell that is the only place left for it in a row, column or block, or whose only pencil mark it is (holding that cell places the digit, `holdDigit` in `src/app/play.js` and `onPress` in `src/app/dom.js`; a cell with one pencil mark left is filled by a hold even with nothing highlighted), and an outline on the cells of a basic X-Wing, Swordfish or Jellyfish for it, smallest first, with every base line holding at least two candidates.
 - A key on either pad turns green once all nine of its digit are placed.
+- The last stage of a hint has an Apply button that makes the move (`applyHint` in `src/app/game.js`). The hint has already been paid for, so no time is added.
+- Practice, from the home menu or a lesson (`src/app/practice.js`): position after position where one technique applies, to find and play. Pattern marks the pattern for practising the move alone, Answer shows the last hint stage, Reset restores the position. A move that is not part of the technique is shown in red and named. Positions come from `data/examples.json`, those where the technique is the next step first.
 - Check the board, on the hint menu (`checkWork` in `src/engine/hint.js`): names the cells holding a wrong digit, the cells whose pencil marks leave out their answer, and the pencil marks for digits already placed in the same row, column or block. A cell without pencil marks claims nothing, so it is never a mistake, and a mark problem that a wrong digit explains is left out, so the check names causes rather than consequences. Time is added once per position, and only when something is wrong.
 
 ## Rules
@@ -38,8 +40,8 @@ A personal remake of the iPhone game Enjoy Sudoku.
 
 - `src/engine/`: puzzle logic with no DOM. `grid.js` geometry, `text.js` names and sentences used in hints, `board.js` board state, `solver.js` backtracking solver, `generator.js` carving puzzles, `logic.js` logical solving, `levels.js` levels, `rating.js` level rules, `hint.js` hints for a player's position, `validate.js` step checks.
 - `src/engine/techniques/`: one file per group of techniques, `common.js` shared helpers, `order.js` the order the solver tries techniques in.
-- `src/app/`: the web app. `main.js` screens and navigation, `play.js` the game screen, `board-view.js` the board, `game.js` game state, `learn.js` lessons, `puzzles.js` puzzle supply, `settings.js`, `stats.js`, `storage.js`.
-- `data/puzzles.json` (puzzles per level) and `data/examples.json` (Learn examples) are built by `node scripts/bank.js`.
+- `src/app/`: the web app. `main.js` screens and navigation, `play.js` the game screen, `practice.js` the practice screen, `board-view.js` the board, `pads.js` the two keypads, `game.js` game state, `learn.js` lessons, `examples.js` the example positions both screens use, `highlights.js` the singles and fish highlights, `puzzles.js` puzzle supply, `settings.js`, `stats.js`, `storage.js`.
+- `data/puzzles.json` (puzzles per level) is built by `node scripts/bank.js`. `data/examples.json` (the positions Learn and Practice use, 12 per technique) is rebuilt on its own by `node scripts/examples.js`, which takes them from the puzzles already in the bank, so the bank does not change.
 - `docs/techniques.md`: the Step format and hint conventions every technique follows.
 
 ## Commands

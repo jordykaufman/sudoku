@@ -84,6 +84,49 @@ test('a saved game restores with its undo history', () => {
   assert.equal(copy.values[0], 0);
 });
 
+test('applying a hint makes the move it describes, and undo takes it back', () => {
+  const game = newGame('auto');
+  const hint = game.hint();
+  assert.equal(hint.kind, 'step');
+  const before = game.snapshot();
+  game.applyHint(hint);
+  for (const [cell, digit] of hint.step.placements) assert.equal(game.values[cell], digit);
+  for (const [cell, digit] of hint.step.eliminations) assert.equal(game.shownMarks(cell) & bit(digit), 0);
+  assert.notEqual(game.snapshot(), before);
+  game.undo();
+  assert.equal(game.snapshot(), before);
+});
+
+test('applying a hint costs no extra time, because the hint was already paid for', () => {
+  const game = newGame('auto');
+  const hint = game.hint();
+  const penalty = game.penalty;
+  game.applyHint(hint);
+  assert.equal(game.penalty, penalty);
+});
+
+test('applying a mistake hint takes the wrong digit out', () => {
+  const game = newGame('auto');
+  const cell = game.values.findIndex((v, i) => !v && !game.isGiven(i));
+  game.enter(cell, wrongFor(cell), SETTINGS);
+  const hint = game.hint();
+  assert.equal(hint.kind, 'mistake');
+  assert.equal(hint.cell, cell);
+  game.applyHint(hint);
+  assert.equal(game.values[cell], 0);
+});
+
+test('applying a mistake hint puts a rubbed out pencil mark back', () => {
+  const game = newGame('auto');
+  const cell = game.values.findIndex((v, i) => !v && !game.isGiven(i));
+  game.toggleMark(cell, right(cell)); // in automatic mode this turns the mark off
+  assert.equal(game.shownMarks(cell) & bit(right(cell)), 0);
+  const hint = game.hint();
+  assert.equal(hint.kind, 'mistake');
+  game.applyHint(hint);
+  assert.ok(game.shownMarks(cell) & bit(right(cell)));
+});
+
 test('show solution puts the answer in every empty cell as a pencil mark', () => {
   const game = newGame();
   game.showSolution();

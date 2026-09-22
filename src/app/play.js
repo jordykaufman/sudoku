@@ -2,8 +2,9 @@ import { DIGITS, POPCOUNT, ROW } from '../engine/grid.js';
 import { LEVELS } from '../engine/levels.js';
 import { techniqueById } from '../engine/techniques/index.js';
 import { BoardView } from './board-view.js';
-import { digitLabel, formatTime, h } from './dom.js';
+import { formatTime, h } from './dom.js';
 import { fishCells, singleCells } from './highlights.js';
+import { Pads } from './pads.js';
 
 // The digit a hold on a cell places, or 0 when the hold should count as a tap. A cell with
 // one pencil mark left can only be that digit, whatever is highlighted; otherwise the cell
@@ -37,14 +38,8 @@ export class PlayScreen {
     this.board.onBlinkEnd = () => this.render();
     this.title = h('div', { class: 'title' });
     this.clock = h('div', { class: 'clock' });
-    // Two keypads, as in the original: large digits place a digit, small digits make pencil marks.
-    const pad = (mode, title) => {
-      const buttons = Array.from({ length: 9 }, (_, i) => h('button', { onclick: () => this.tapDigit(i + 1, mode) }));
-      const el = h('div', { class: 'pad-col' }, h('div', { class: 'pad-title' }, title), h('div', { class: `pad ${mode}` }, buttons));
-      return { mode, buttons, el };
-    };
-    this.pads = [pad('place', 'Digit'), pad('mark', 'Pencil mark')];
-    this.padsEl = h('div', { class: 'pads' }, this.pads.map((p) => p.el));
+    this.pads = new Pads((digit, mode) => this.tapDigit(digit, mode));
+    this.padsEl = this.pads.el;
     this.eraseButton = h('button', { onclick: () => this.tapErase() }, 'Erase');
     this.undoButton = h('button', { onclick: () => this.change(() => this.game.undo()) }, 'Undo');
     this.redoButton = h('button', { onclick: () => this.change(() => this.game.redo()) }, 'Redo');
@@ -268,6 +263,27 @@ export class PlayScreen {
     this.render();
   }
 
+  // Makes the move the hint describes, so the player does not have to copy it out.
+  applyHint() {
+    const result = this.game.applyHint(this.hint);
+    this.hint = null;
+    this.panel = 'pad';
+    if (!result) {
+      this.render();
+      return;
+    }
+    this.sound();
+    if (result.placed && this.app.settings.blink) this.board.blink(this.game, result.houses, result.digit);
+    if (this.game.checkFinished()) {
+      this.selectedCell = -1;
+      this.selectedDigit = 0;
+      this.afterChange();
+      this.app.finishGame(this.game);
+      return;
+    }
+    this.afterChange();
+  }
+
   showCheck() {
     this.check = this.game.checkWork();
     this.panel = 'check';
@@ -338,6 +354,8 @@ export class PlayScreen {
       const stages = this.stages();
       const technique = this.hint.kind === 'step' && this.stageIndex > 0 ? techniqueById(this.hint.step.technique) : null;
       const variant = technique && this.hint.step.variant ? ` (${this.hint.step.variant})` : '';
+      // The last stage says what to do, so More gives way to Apply, which does it.
+      const last = this.stageIndex === stages.length - 1;
       this.controls.replaceChildren(
         h(
           'div',
@@ -348,7 +366,9 @@ export class PlayScreen {
             'div',
             { class: 'buttons' },
             h('button', { onclick: () => this.moveStage(-1), disabled: this.stageIndex === 0 }, 'Back'),
-            h('button', { onclick: () => this.moveStage(1), disabled: this.stageIndex === stages.length - 1 }, 'More'),
+            last
+              ? h('button', { class: 'apply', onclick: () => this.applyHint() }, 'Apply')
+              : h('button', { onclick: () => this.moveStage(1) }, 'More'),
             h('button', { onclick: () => this.closeHint() }, 'Done'),
           ),
         ),
@@ -392,17 +412,13 @@ export class PlayScreen {
     }
 
     if (this.controls.firstChild !== this.padsEl) this.controls.replaceChildren(this.padsEl, this.tools);
-    for (const { mode, buttons } of this.pads) {
-      buttons.forEach((button, i) => {
-        const digit = i + 1;
-        button.textContent = digitLabel(digit, settings.font);
-        button.setAttribute('aria-label', `${mode === 'mark' ? 'pencil mark' : 'digit'} ${digit}`);
-        const active = digit === this.selectedDigit && mode === this.selectedMode;
-        button.className = [active ? 'active' : '', game.digitCount(digit) === 9 ? 'complete' : ''].join(' ').trim();
-      });
-    }
-    const solvable = settings.showSolvable ? (game.isSolvable() ? 'solvable' : 'unsolvable') : this.flash;
-    this.padsEl.className = `pads ${solvable}`.trim();
+    this.pads.render({
+      font: settings.font,
+      selectedDigit: this.selectedDigit,
+      selectedMode: this.selectedMode,
+      countOf: (digit) => game.digitCount(digit),
+      state: settings.showSolvable ? (game.isSolvable() ? 'solvable' : 'unsolvable') : this.flash,
+    });
     this.eraseButton.className = this.erasing ? 'active' : '';
     this.undoButton.disabled = game.undoStack.length === 0;
     this.redoButton.disabled = game.redoStack.length === 0;

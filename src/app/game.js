@@ -292,6 +292,43 @@ export class Game {
     return result;
   }
 
+  // Does what a hint says: a step's placements and eliminations, the digit a stuck hint gives,
+  // or the fix for a mistake. The hint has already been paid for, so no time is added. Returns
+  // the same as enter() for the last digit placed, or null when there was nothing to do.
+  applyHint(hint) {
+    if (this.finished || !hint || hint.kind === 'solved') return null;
+    let placed = null;
+    const place = (cell, digit) => {
+      if (this.isGiven(cell) || this.values[cell] === digit) return;
+      this.values[cell] = digit;
+      if (this.pencilMode === 'erase') for (const p of PEERS[cell]) this.marks[p] &= ~bit(digit);
+      placed = { cell, digit };
+    };
+    const remove = (cell, digit) => {
+      if (this.values[cell]) return;
+      if (this.pencilMode === 'auto') this.removed[cell] |= bit(digit);
+      else this.marks[cell] &= ~bit(digit);
+    };
+
+    this.record();
+    if (hint.kind === 'step') {
+      for (const [cell, digit] of hint.step.eliminations) remove(cell, digit);
+      for (const [cell, digit] of hint.step.placements) place(cell, digit);
+    } else if (hint.kind === 'stuck') {
+      place(hint.cell, this.solution[hint.cell]);
+    } else if (hint.kind === 'mistake') {
+      const cell = hint.cell;
+      if (this.values[cell]) this.values[cell] = 0; // a wrong digit: take it out
+      else if (this.pencilMode === 'auto') this.removed[cell] &= ~bit(this.solution[cell]); // a mark that was rubbed out
+      else this.marks[cell] |= bit(this.solution[cell]);
+    }
+
+    const houses = placed
+      ? [ROW[placed.cell], 9 + COL[placed.cell], 18 + BOX[placed.cell]].filter((h) => HOUSES[h].every((c) => this.values[c]))
+      : [];
+    return { placed: Boolean(placed), houses, digit: placed && this.digitCount(placed.digit) === 9 ? placed.digit : 0 };
+  }
+
   // Shows the solution of every empty cell as its only pencil mark.
   showSolution() {
     this.record();

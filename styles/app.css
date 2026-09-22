@@ -186,8 +186,18 @@ table.stats th:first-child, table.stats td:first-child { text-align: left; }
 .play .panel .text { font-size: 15px; max-height: 11.5em; overflow-y: auto; }
 .panel .buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: auto; }
 .panel .buttons button { height: 42px; }
+.panel .buttons button.apply { background: var(--active); color: var(--active-text); font-weight: 600; }
 .panel .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .panel .menu button { min-height: 44px; padding: 6px; font-size: 15px; }
+
+/* Practice: a position with one technique in it, to find and play. */
+.practice .board-wrap { width: min(100%, calc(100dvh - 400px)); }
+.practice-note {
+  width: min(100%, 480px); min-height: 3.4em; max-height: 7em; overflow-y: auto; font-size: 15px;
+  -webkit-user-select: text; user-select: text;
+}
+.practice-note.done { color: var(--ok); font-weight: 600; }
+.practice-note.wrong { color: var(--danger); }
 
 .example { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
 .example .board-wrap { width: min(100%, 480px); margin: 0 auto; }

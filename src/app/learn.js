@@ -1,34 +1,8 @@
-import { Board } from '../engine/board.js';
-import { parseGrid } from '../engine/grid.js';
 import { LEVELS, TECHNIQUE_LEVEL } from '../engine/levels.js';
 import { techniqueById } from '../engine/techniques/index.js';
 import { BoardView } from './board-view.js';
 import { h } from './dom.js';
-
-// Example positions for each technique, data/examples.json, made by scripts/bank.js:
-//   { [technique id]: [{ values, cands, givens }] }
-// `values` has 81 characters ('.' for empty), `cands` two base-36 characters per cell, and
-// `givens` 81 characters with '1' for each clue.
-let examples = null;
-
-async function loadExamples() {
-  if (examples) return examples;
-  try {
-    const response = await fetch('data/examples.json');
-    if (response.ok) examples = await response.json();
-  } catch {
-    // No examples: the lesson shows its text only.
-  }
-  return examples ?? {};
-}
-
-function decode({ values, cands, givens }) {
-  return new Board(
-    parseGrid(values),
-    Uint16Array.from({ length: 81 }, (_, i) => parseInt(cands.slice(i * 2, i * 2 + 2), 36)),
-    Uint8Array.from(givens, (ch) => (ch === '1' ? 1 : 0)),
-  );
-}
+import { decode, loadExamples } from './examples.js';
 
 // A technique's lesson, followed by example positions that step through the technique's hint.
 export class LessonScreen {
@@ -58,6 +32,7 @@ export class LessonScreen {
       h('h1', {}, this.technique.name),
       h('h2', {}, `Level: ${LEVELS[TECHNIQUE_LEVEL.get(id)].name}`),
       (this.technique.lesson ?? []).map((paragraph) => h('p', {}, paragraph)),
+      h('div', { class: 'list' }, h('button', { class: 'row', onclick: () => app.openPractice(id) }, 'Practice this technique', h('span', { class: 'sub' }, 'Position after position, with the answer a button away'))),
       this.exampleEl,
     );
   }
