@@ -78,13 +78,17 @@ export class PracticeScreen {
     root.replaceChildren(this.el);
     this.note.textContent = 'Looking for positions...';
     loadExamples().then((all) => {
-      // A position where the technique is the next step needs no other move to be ignored, so
-      // those come first.
-      const examples = (all[this.technique.id] ?? []).slice().sort((a, b) => (b.next ? 1 : 0) - (a.next ? 1 : 0));
+      // A different order every time, so that coming back to a technique is not the same round
+      // of positions in the same sequence.
+      const examples = (all[this.technique.id] ?? []).slice();
+      for (let i = examples.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [examples[i], examples[j]] = [examples[j], examples[i]];
+      }
       for (const example of examples) {
         const start = decode(example);
         const step = this.technique.find(start.clone());
-        if (step) this.positions.push({ start, step, next: Boolean(example.next) });
+        if (step) this.positions.push({ start, step });
       }
       if (!this.positions.length) {
         this.note.textContent = `There are no practice positions for ${this.technique.name} yet.`;
@@ -188,13 +192,12 @@ export class PracticeScreen {
       stage,
     });
 
-    const borrowed = !this.positions[this.index].next ? ' An easier move also applies here.' : '';
     let note;
     if (done) note = `Right. ${this.step.stages.at(-1).text}`;
     else if (this.answer) note = this.step.stages.at(-1).text;
     else if (wrong.length) note = `${cellList(wrong)} ${plural(wrong.length, 'is', 'are')} not part of this ${this.technique.name}.`;
     else if (this.showPattern) note = `The ${name} is marked. Make the move it allows.`;
-    else note = `Find the ${name} in this position, then make the move it allows.${borrowed}`;
+    else note = `Find the ${name} in this position, then make the move it allows.`;
     this.note.textContent = note;
     this.note.className = `practice-note${done ? ' done' : wrong.length ? ' wrong' : ''}`;
 

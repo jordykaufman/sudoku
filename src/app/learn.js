@@ -40,7 +40,10 @@ export class LessonScreen {
   mount(root) {
     root.replaceChildren(this.el);
     loadExamples().then((all) => {
-      for (const example of all[this.technique.id] ?? []) {
+      // A position where the technique is the next step shows it with nothing easier in the
+      // way, which is clearer to learn from, so those come first.
+      const examples = (all[this.technique.id] ?? []).slice().sort((a, b) => (b.next ? 1 : 0) - (a.next ? 1 : 0));
+      for (const example of examples) {
         const board = decode(example);
         const step = this.technique.find(board);
         if (step) this.examples.push({ board, step });
