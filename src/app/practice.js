@@ -210,7 +210,8 @@ export class PracticeScreen {
     this.note.className = `practice-note${done ? ' done' : wrong.length ? ' wrong' : ''}`;
 
     this.count.textContent = `${this.index + 1} of ${this.positions.length}`;
-    this.patternButton.textContent = this.showPattern ? 'Hide pattern' : 'Pattern';
+    // One label either way, green while it is on, as the Erase button does in the game.
+    this.patternButton.textContent = 'Pattern';
     this.patternButton.className = this.showPattern ? 'active' : '';
     this.answerButton.disabled = this.answer || done;
     this.pads.render({

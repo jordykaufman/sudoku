@@ -333,7 +333,8 @@ export class PlayScreen {
     this.board.render({
       game,
       settings,
-      selectedCell: this.selectedCell,
+      // A hint or the board check draws its own highlights, which a selection would cover.
+      selectedCell: stage ? -1 : this.selectedCell,
       highlightDigit: hl,
       stage,
       singles: this.singles,
