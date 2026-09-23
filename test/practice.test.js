@@ -87,6 +87,46 @@ test('placing a digit the step does not ask for is wrong', () => {
   assert.deepEqual(result.wrong, [cell]);
 });
 
+// The rules a stored position has to keep, which scripts/examples.js applies when it builds
+// them: the technique applies, no technique earlier in the solving order makes any of the same
+// changes (or the exercise would be the hard way to do a simpler move), and no single easier
+// than the technique is going begging (or the eye would go there instead).
+test('every stored position is a sound exercise', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { ORDER } = await import('../src/engine/techniques/order.js');
+  const examples = JSON.parse(readFileSync(new URL('../data/examples.json', import.meta.url), 'utf8'));
+  const rank = new Map(ORDER.map((id, index) => [id, index]));
+  const singles = ['full-house', 'naked-single', 'hidden-single-block', 'hidden-single'];
+  const edits = (step) => [...step.eliminations, ...step.placements].map(([cell, digit]) => cell * 10 + digit);
+  const decode = ({ values, cands, givens }) =>
+    new Board(
+      parseGrid(values),
+      Uint16Array.from({ length: 81 }, (_, i) => parseInt(cands.slice(i * 2, i * 2 + 2), 36)),
+      Uint8Array.from(givens, (ch) => (ch === '1' ? 1 : 0)),
+    );
+
+  for (const [id, positions] of Object.entries(examples)) {
+    assert.ok(positions.length >= 3, `${id} has only ${positions.length} positions`);
+    positions.forEach((position, index) => {
+      const where = `${id} position ${index + 1}`;
+      const step = techniqueById(id).find(decode(position));
+      assert.ok(step, `${where}: the technique does not apply`);
+      const changes = new Set(edits(step));
+      for (const earlier of ORDER.slice(0, rank.get(id))) {
+        const other = techniqueById(earlier)?.find(decode(position));
+        assert.ok(
+          !other || !edits(other).some((edit) => changes.has(edit)),
+          `${where}: ${earlier} makes the same change`,
+        );
+      }
+      for (const single of singles) {
+        if (single === id || rank.get(single) > rank.get(id)) continue;
+        assert.ok(!techniqueById(single).find(decode(position)), `${where}: a ${single} is going begging`);
+      }
+    });
+  }
+});
+
 test('every technique has at least one practice position, and its step still applies', async () => {
   const { readFileSync } = await import('node:fs');
   const examples = JSON.parse(readFileSync(new URL('../data/examples.json', import.meta.url), 'utf8'));
