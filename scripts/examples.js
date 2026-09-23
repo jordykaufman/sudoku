@@ -10,8 +10,11 @@
 // technique is the next step anyway are marked, and both screens show those first.
 //
 // At most one position per board per technique, so that the examples of a technique come from
-// as many different boards as possible. Where a board offers both, the position where the
-// technique is the next step is the one kept, and Learn shows those first.
+// as many different boards as possible. A position with a single going begging is a poor place
+// to practise something harder, so positions where a Full House, a Naked Single or a Hidden
+// Single is there for the taking are set aside and used only to fill a technique that would
+// otherwise fall short. Of what is left, the position where the technique is the next step is
+// the one kept, and Learn shows those first.
 
 import { writeFileSync } from 'node:fs';
 import { Board } from '../src/engine/board.js';
@@ -31,7 +34,9 @@ for (let i = 0; i < args.length; i += 2) {
 }
 
 const byId = new Map(TECHNIQUES.map((technique) => [technique.id, technique]));
+const SINGLES = ['full-house', 'naked-single', 'hidden-single-block', 'hidden-single'].map((id) => byId.get(id)).filter(Boolean);
 const found = Object.fromEntries(ORDER.map((id) => [id, []]));
+const reserve = Object.fromEntries(ORDER.map((id) => [id, []])); // positions with a single going begging
 const seen = new Set(); // positions already kept, so no two examples are the same board state
 const short = () => ORDER.filter((id) => found[id].length < options.count && byId.has(id));
 
@@ -49,34 +54,55 @@ let positions = 0;
 
 while (short().length && Date.now() - started < options.minutes * 60000) {
   const puzzle = carve(randomSolution(rng), rng);
-  const picks = new Map(); // technique id -> { next, any }: the best position this board offers
+  const picks = new Map(); // technique id -> { next, clean, spare }: the best this board offers
   const wanted = short();
   logicalSolve(Board.fromValues(puzzle), {
     onStep: (step, board) => {
       positions++;
+      let single = null; // worked out once per position, and only if a technique wants it
       for (const id of wanted) {
         if (found[id].length >= options.count) continue;
         if (!picks.has(id)) picks.set(id, {});
         const pick = picks.get(id);
         if (pick.next) continue;
-        if (id === step.technique) pick.next = encode(board, true);
-        else if (!pick.any && byId.get(id).find(board)) pick.any = encode(board, false);
+        // The next step is never a position with a single going begging: an easier technique
+        // would have been taken first.
+        if (id === step.technique) {
+          pick.next = encode(board, true);
+          continue;
+        }
+        if (pick.clean) continue;
+        if (!byId.get(id).find(board)) continue;
+        if (single === null) single = SINGLES.some((technique) => technique.find(board));
+        if (!single) pick.clean = encode(board, false);
+        else if (!pick.spare) pick.spare = encode(board, false);
       }
     },
   });
   for (const [id, pick] of picks) {
-    const example = pick.next ?? pick.any;
-    if (!example || found[id].length >= options.count) continue;
-    const key = example.values + example.cands;
+    const good = pick.next ?? pick.clean;
+    const chosen = good ?? pick.spare;
+    if (!chosen) continue; // this board had nothing for that technique
+    const key = chosen.values + chosen.cands;
     if (seen.has(key)) continue;
+    const list = good ? found[id] : reserve[id];
+    if (list.length >= options.count) continue;
+    list.push(chosen);
     seen.add(key);
-    found[id].push(example);
   }
   boards++;
   if (boards % 200 === 0) {
     const left = short();
     console.log(`${Math.round((Date.now() - started) / 1000)}s, ${boards} boards: ${left.length} techniques short${left.length && left.length < 6 ? ` (${left.join(', ')})` : ''}`);
   }
+}
+
+// A technique that could not fill up on clean positions takes what it can from the reserve.
+const borrowed = {};
+for (const id of ORDER) {
+  const take = reserve[id].splice(0, Math.max(0, options.count - found[id].length));
+  if (take.length) borrowed[id] = take.length;
+  found[id].push(...take);
 }
 
 const examples = Object.fromEntries(ORDER.map((id) => [id, found[id]]));
@@ -86,5 +112,6 @@ console.log(`\nDone in ${Math.round((Date.now() - started) / 1000)}s: ${boards} 
 for (const id of ORDER) {
   const list = found[id];
   const next = list.filter((example) => example.next).length;
-  console.log(`  ${id.padEnd(34)}${String(list.length).padStart(3)}${next ? `  (${next} where nothing easier applies)` : ''}`);
+  const notes = [next ? `${next} where nothing easier applies` : '', borrowed[id] ? `${borrowed[id]} with a single going begging` : ''].filter(Boolean);
+  console.log(`  ${id.padEnd(34)}${String(list.length).padStart(3)}${notes.length ? `  (${notes.join(', ')})` : ''}`);
 }

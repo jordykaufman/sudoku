@@ -1,6 +1,7 @@
 import { DIGITS, bit } from '../engine/grid.js';
 import { techniqueById } from '../engine/techniques/index.js';
 import { cellList, plural } from '../engine/text.js';
+import { rearrange } from '../engine/transform.js';
 import { BoardView } from './board-view.js';
 import { h } from './dom.js';
 import { decode, loadExamples } from './examples.js';
@@ -38,7 +39,7 @@ export class PracticeScreen {
   constructor(app, id, onBack) {
     this.app = app;
     this.technique = techniqueById(id);
-    this.positions = []; // { start, step, next } for each example of this technique
+    this.positions = []; // a board for each example of this technique, rearranged when dealt
     this.index = 0;
     this.start = null; // the position as it was handed out
     this.board = null; // the position as the player has left it
@@ -86,9 +87,8 @@ export class PracticeScreen {
         [examples[i], examples[j]] = [examples[j], examples[i]];
       }
       for (const example of examples) {
-        const start = decode(example);
-        const step = this.technique.find(start.clone());
-        if (step) this.positions.push({ start, step });
+        const position = decode(example);
+        if (this.technique.find(position.clone())) this.positions.push(position);
       }
       if (!this.positions.length) {
         this.note.textContent = `There are no practice positions for ${this.technique.name} yet.`;
@@ -99,8 +99,16 @@ export class PracticeScreen {
   }
 
   show(index) {
-    const { start, step } = this.positions[index % this.positions.length];
     this.index = index % this.positions.length;
+    // Renaming the digits and rearranging the rows and columns leaves the technique where it
+    // was, on cells that have moved, so a position never comes up looking the same twice.
+    const position = this.positions[this.index];
+    let start = rearrange(position);
+    let step = this.technique.find(start.clone());
+    if (!step) {
+      start = position.clone();
+      step = this.technique.find(start.clone());
+    }
     this.start = start;
     this.board = start.clone();
     this.step = step;
