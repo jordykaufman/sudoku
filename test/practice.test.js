@@ -87,17 +87,14 @@ test('placing a digit the step does not ask for is wrong', () => {
   assert.deepEqual(result.wrong, [cell]);
 });
 
-// The rules a stored position has to keep, which scripts/examples.js applies when it builds
-// them: the technique applies, no technique earlier in the solving order makes any of the same
-// changes (or the exercise would be the hard way to do a simpler move), and no single easier
-// than the technique is going begging (or the eye would go there instead).
+// The rules a stored position has to keep, the same ones scripts/examples.js builds with
+// (scripts/exercise-rules.js): the technique applies, no technique earlier in the solving order
+// makes any of the same changes, going through every pattern it has rather than the first one
+// it finds, and no single easier than the technique is going begging.
 test('every stored position is a sound exercise', async () => {
   const { readFileSync } = await import('node:fs');
-  const { ORDER } = await import('../src/engine/techniques/order.js');
+  const { easierSingle, simplerTechnique } = await import('../scripts/exercise-rules.js');
   const examples = JSON.parse(readFileSync(new URL('../data/examples.json', import.meta.url), 'utf8'));
-  const rank = new Map(ORDER.map((id, index) => [id, index]));
-  const singles = ['full-house', 'naked-single', 'hidden-single-block', 'hidden-single'];
-  const edits = (step) => [...step.eliminations, ...step.placements].map(([cell, digit]) => cell * 10 + digit);
   const decode = ({ values, cands, givens }) =>
     new Board(
       parseGrid(values),
@@ -105,26 +102,21 @@ test('every stored position is a sound exercise', async () => {
       Uint8Array.from(givens, (ch) => (ch === '1' ? 1 : 0)),
     );
 
+  const problems = [];
   for (const [id, positions] of Object.entries(examples)) {
-    assert.ok(positions.length >= 3, `${id} has only ${positions.length} positions`);
+    if (positions.length < 3) problems.push(`${id} has only ${positions.length} positions`);
     positions.forEach((position, index) => {
       const where = `${id} position ${index + 1}`;
-      const step = techniqueById(id).find(decode(position));
-      assert.ok(step, `${where}: the technique does not apply`);
-      const changes = new Set(edits(step));
-      for (const earlier of ORDER.slice(0, rank.get(id))) {
-        const other = techniqueById(earlier)?.find(decode(position));
-        assert.ok(
-          !other || !edits(other).some((edit) => changes.has(edit)),
-          `${where}: ${earlier} makes the same change`,
-        );
-      }
-      for (const single of singles) {
-        if (single === id || rank.get(single) > rank.get(id)) continue;
-        assert.ok(!techniqueById(single).find(decode(position)), `${where}: a ${single} is going begging`);
-      }
+      const board = decode(position);
+      const step = techniqueById(id).find(board.clone());
+      if (!step) return problems.push(`${where}: the technique does not apply`);
+      const simpler = simplerTechnique(board, id, step);
+      if (simpler) problems.push(`${where}: ${simpler} makes one of the same changes`);
+      const single = easierSingle(board, id);
+      if (single) problems.push(`${where}: a ${single} is going begging`);
     });
   }
+  assert.deepEqual(problems.slice(0, 10), [], `${problems.length} problems, the first ten shown`);
 });
 
 test('every technique has at least one practice position, and its step still applies', async () => {
