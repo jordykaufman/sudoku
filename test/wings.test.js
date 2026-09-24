@@ -264,7 +264,11 @@ test('wxyz-wing: needs exactly one digit that is not restricted', () => {
   // R4C3, R4C4, R4C6 and R6C1 contain 1, 2, 5 and 9. 1, 2 and 5 are restricted; the 9 in R6C1
   // doesn't see the 9s in R4C4 and R4C6.
   const cells = { R4C3: '1259', R4C4: '59', R4C6: '259', R6C1: '19' };
-  expectEliminations('wxyz-wing', boardWith(cells), [['R4C1', 9], ['R4C2', 9]]);
+  const step = expectEliminations('wxyz-wing', boardWith(cells), [['R4C1', 9], ['R4C2', 9]]);
+  assert.match(
+    step.stages[1].text,
+    /In these cells, every 1 is in block 4, every 2 is in row 4 and every 5 is in row 4, so each of 1, 2 and 5 can go in at most one of them\. The 9s are not all in one row, column or block: R4C4 and R6C1 both have 9/,
+  );
   // With the 5 and 9 cell in R5C4 instead of R4C4, its 5 doesn't see the 5 in R4C3 either.
   const { R4C4, ...rest } = cells;
   assert.equal(run('wxyz-wing', boardWith({ ...rest, R5C4: R4C4 })), null);

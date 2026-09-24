@@ -289,15 +289,15 @@ const FOUR_DIGIT_MASKS = [];
 for (let mask = 0; mask < 512; mask++) if (POPCOUNT[mask] === 4) FOUR_DIGIT_MASKS.push(mask);
 
 // WXYZ-Wing: 4 cells, not all in one house, with 4 candidates between them, where exactly one
-// digit z is not restricted (a digit is restricted when every two of the cells that have it
-// see each other). One of the cells is z.
+// digit z is not restricted (a digit is restricted when the cells that have it are all in one
+// house, which is the same as each of them seeing all the others). One of the cells is z.
 const wxyzWing = {
   id: 'wxyz-wing',
   name: 'WXYZ-Wing',
   lesson: [
     'Look for four cells, not all in one row, column or block, whose candidates together are only four digits, for example 1, 2, 5 and 9.',
-    'For each of the four digits, look at the cells among the four that have it as a candidate. If every two of those cells see each other, the digit can go in at most one of the four cells. Check that this is true for three of the digits, for example 1, 2 and 5, and not for the fourth, 9.',
-    'Suppose a cell that sees every 9 in the four cells were 9. Then none of the four cells could be 9, and the four cells would have only 1, 2 and 5 left. One of those digits would have to go in two of the four cells, and that is impossible, because those two cells see each other.',
+    'For each of the four digits, look at the cells among the four that have it as a candidate. If those cells are all in one row, column or block, the digit can go in at most one of the four cells. Check that this is true for three of the digits, for example 1, 2 and 5, and not for the fourth, 9.',
+    'Suppose a cell that sees every 9 in the four cells were 9. Then none of the four cells could be 9, and the four cells would have only 1, 2 and 5 left. One of those digits would have to go in two of the four cells, and that is impossible, because the cells that have it are all in one row, column or block.',
     'So 9 can be removed from every cell that sees all the 9s in the four cells.',
   ],
   find(board) {
@@ -342,10 +342,13 @@ function wxyzStep(board, cells, all) {
   let z = 0;
   let open = 0;
   const restricted = [];
+  const where = [];
   for (const digit of DIGITS[all]) {
     const withDigit = cells.filter((cell) => board.has(cell, digit));
-    if (withDigit.every((a, i) => withDigit.slice(i + 1).every((b) => sees(a, b)))) {
+    const houses = sharedHouses(withDigit);
+    if (houses.length) {
       restricted.push(digit);
+      where.push(`every ${digit} is in ${houseName(houses[0])}`);
     } else {
       open++;
       z = digit;
@@ -367,7 +370,7 @@ function wxyzStep(board, cells, all) {
     stages: [
       { text: `Look at ${names}.`, cells: cells.map((cell) => [cell, 'key']) },
       {
-        text: `Between them, ${names} have only the candidates ${joinList(DIGITS[all])}: four digits for four cells. For each of ${joinList(restricted)}, every two of these cells that have it as a candidate see each other, so it can go in at most one of them. That is not true for ${z}: ${cellName(p)} and ${cellName(q)} both have ${z} as a candidate but do not see each other.`,
+        text: `Between them, ${names} have only the candidates ${joinList(DIGITS[all])}: four digits for four cells. In these cells, ${joinList(where)}, so each of ${joinList(restricted)} can go in at most one of them. The ${z}s are not all in one row, column or block: ${cellName(p)} and ${cellName(q)} both have ${z} as a candidate but do not see each other.`,
         cells: cells.map((cell) => [cell, 'key']),
         marks,
       },
