@@ -81,6 +81,7 @@ const lockedCandidateDirectPointing = {
   id: 'locked-candidate-direct-pointing',
   name: 'Locked Candidate (direct pointing)',
   lesson: [
+    'This is a Locked Candidate followed by a Hidden Single. It counts as a technique of its own, at an easier level than Locked Candidate, because it ends with a digit placed, so you can do it without pencil marks.',
     'Pick a digit and a block that does not have that digit yet, and find the cells in the block that can still hold it. If these cells are all in one row, the digit goes in that row, inside the block. So no cell of the row outside the block can hold the digit, and you can remove it from those cells. The same works with a column.',
     'Then look at the rows, columns and blocks of the cells you removed the digit from. If one of them had two or more cells that could hold the digit and now has only one, the digit goes in that cell.',
   ],
