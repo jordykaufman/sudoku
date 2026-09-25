@@ -327,7 +327,24 @@ function boot() {
 
   window.addEventListener('pagehide', saveProgress);
 
+  stopZoom();
   keepUpdated();
+}
+
+// Keeps the page at the size it opens at. The viewport tag in index.html and touch-action in
+// app.css ask for that, but Safari lets people pinch to zoom anyway, so pinches are cancelled
+// here: Safari's own gesture events, and any touch move with two or more fingers.
+function stopZoom() {
+  for (const type of ['gesturestart', 'gesturechange']) {
+    document.addEventListener(type, (event) => event.preventDefault());
+  }
+  document.addEventListener(
+    'touchmove',
+    (event) => {
+      if (event.touches.length > 1) event.preventDefault();
+    },
+    { passive: false },
+  );
 }
 
 function saveProgress() {

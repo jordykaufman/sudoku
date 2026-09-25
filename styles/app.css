@@ -63,7 +63,8 @@
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html, body { height: 100%; margin: 0; }
+/* Pages scroll but never zoom, by pinching or by tapping twice (stopZoom in src/app/main.js). */
+html, body { height: 100%; margin: 0; touch-action: pan-x pan-y; }
 body {
   background: var(--bg); color: var(--text);
   font: 17px/1.35 -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
