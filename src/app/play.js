@@ -1,8 +1,9 @@
 import { DIGITS, POPCOUNT, ROW } from '../engine/grid.js';
 import { LEVELS } from '../engine/levels.js';
 import { techniqueById } from '../engine/techniques/index.js';
+import { plural } from '../engine/text.js';
 import { BoardView } from './board-view.js';
-import { formatTime, h } from './dom.js';
+import { formatTime, h, onPress } from './dom.js';
 import { fishCells, singleCells } from './highlights.js';
 import { Pads } from './pads.js';
 
@@ -14,6 +15,12 @@ export function holdDigit({ value, marks, single, highlightDigit }) {
   if (POPCOUNT[marks] === 1) return DIGITS[marks][0];
   return single ? highlightDigit : 0;
 }
+
+// Four quick taps on the level name at the top make every move that the techniques up to this
+// level allow. Nothing on the screen shows it.
+const SOLVE_LEVEL = LEVELS.findIndex((level) => level.id === 'intricate');
+const TAPS_TO_SOLVE = 4;
+const TAP_GAP_MS = 700; // the longest pause between two of those taps
 
 
 // The game screen. `app` provides: settings, saveGame(game), finishGame(game), openMenu()
@@ -27,9 +34,12 @@ export class PlayScreen {
     this.selectedMode = 'place'; // what the selected digit does to a cell: 'place' or 'mark'
     this.singles = new Set(); // cells shown as the only place left for the highlighted digit
     this.erasing = false;
-    this.panel = 'pad'; // 'pad', 'menu' (hint options), 'hint' or 'check'
+    this.panel = 'pad'; // 'pad', 'menu' (hint options), 'hint', 'check' or 'note'
     this.hint = null;
     this.check = null; // the result of Check the board, while it is shown
+    this.note = ''; // what the solving shortcut did, while it is shown
+    this.titleTaps = 0;
+    this.lastTitleTap = 0;
     this.stageIndex = 0;
     this.flash = ''; // 'solvable' or 'unsolvable' for a moment after asking
     this.ticks = 0;
@@ -37,6 +47,9 @@ export class PlayScreen {
     this.board = new BoardView((cell, held) => this.tapCell(cell, held));
     this.board.onBlinkEnd = () => this.render();
     this.title = h('div', { class: 'title' });
+    onPress(this.title, (held) => {
+      if (!held) this.tapTitle();
+    });
     this.clock = h('div', { class: 'clock' });
     this.pads = new Pads((digit, mode) => this.tapDigit(digit, mode));
     this.padsEl = this.pads.el;
@@ -193,6 +206,11 @@ export class PlayScreen {
     if (!result) return;
     this.sound();
     if (result.placed && settings.blink) this.board.blink(this.game, result.houses, result.digit);
+    this.afterMove();
+  }
+
+  // Saves and redraws after a move, and ends the game when the move completed the board.
+  afterMove() {
     if (this.game.checkFinished()) {
       this.selectedCell = -1;
       this.selectedDigit = 0;
@@ -274,14 +292,44 @@ export class PlayScreen {
     }
     this.sound();
     if (result.placed && this.app.settings.blink) this.board.blink(this.game, result.houses, result.digit);
-    if (this.game.checkFinished()) {
-      this.selectedCell = -1;
-      this.selectedDigit = 0;
-      this.afterChange();
-      this.app.finishGame(this.game);
-      return;
+    this.afterMove();
+  }
+
+  tapTitle() {
+    const now = performance.now();
+    this.titleTaps = now - this.lastTitleTap < TAP_GAP_MS ? this.titleTaps + 1 : 1;
+    this.lastTitleTap = now;
+    if (this.titleTaps < TAPS_TO_SOLVE) return;
+    this.titleTaps = 0;
+    this.autoSolve();
+  }
+
+  // Makes every move the techniques up to SOLVE_LEVEL allow, then says what it did.
+  autoSolve() {
+    if (this.panel !== 'pad' || this.game.finished) return;
+    const result = this.game.autoSolve(SOLVE_LEVEL);
+    const name = LEVELS[SOLVE_LEVEL].name;
+    if (result.mistake) {
+      this.note = 'There is a mistake on the board, so nothing was solved.';
+    } else if (!result.steps) {
+      this.note = `No technique up to the ${name} level applies here.`;
+    } else {
+      const placed = result.placed
+        ? `, placing ${result.placed} ${plural(result.placed, 'digit', 'digits')}. The pencil marks show the candidates left.`
+        : '. No digit could be placed, but the pencil marks now show the candidates left.';
+      this.note = `Made every move the techniques up to the ${name} level allow${placed} Undo takes it all back. This game's time will not count in Statistics.`;
+      this.sound();
     }
-    this.afterChange();
+    this.selectedDigit = 0;
+    this.selectedCell = -1;
+    this.panel = 'note';
+    this.afterMove();
+  }
+
+  closeNote() {
+    this.note = '';
+    this.panel = 'pad';
+    this.render();
   }
 
   showCheck() {
@@ -377,14 +425,10 @@ export class PlayScreen {
       return;
     }
 
-    if (this.panel === 'check') {
+    if (this.panel === 'check' || this.panel === 'note') {
+      const [text, close] = this.panel === 'check' ? [this.check.text, () => this.closeCheck()] : [this.note, () => this.closeNote()];
       this.controls.replaceChildren(
-        h(
-          'div',
-          { class: 'panel' },
-          h('div', { class: 'text' }, this.check.text),
-          h('div', { class: 'buttons' }, h('button', { onclick: () => this.closeCheck() }, 'Done')),
-        ),
+        h('div', { class: 'panel' }, h('div', { class: 'text' }, text), h('div', { class: 'buttons' }, h('button', { onclick: close }, 'Done'))),
       );
       return;
     }

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Game } from '../src/app/game.js';
 import { bit, formatGrid, parseGrid } from '../src/engine/grid.js';
+import { solveUpTo } from '../src/engine/hint.js';
+import { LEVELS } from '../src/engine/levels.js';
 import { solve } from '../src/engine/solver.js';
 
 const PUZZLE = '003020600900305001001806400008102900700000008006708200002609500800203009005010300';
@@ -138,4 +140,44 @@ test('a board that matches the solution is finished', () => {
   const game = newGame();
   for (let cell = 0; cell < 81; cell++) if (!game.values[cell]) game.enter(cell, right(cell), SETTINGS);
   assert.equal(game.checkFinished(), true);
+});
+
+// A Devious puzzle from data/puzzles.json, and the level the solving shortcut goes up to.
+const DEVIOUS = '7...9..26...4..7.1......98...2..6.1.97..1..52.1.2..3...57......6.9..7...84..5...3';
+const INTRICATE = LEVELS.findIndex((level) => level.id === 'intricate');
+const deviousGame = (pencilMode) =>
+  new Game({ kind: 'random', level: 12, puzzle: DEVIOUS, solution: formatGrid(solve(parseGrid(DEVIOUS)).solution), pencilMode });
+
+for (const pencilMode of ['manual', 'erase', 'auto']) {
+  test(`the solving shortcut places digits and leaves the candidates as pencil marks (${pencilMode})`, () => {
+    const game = deviousGame(pencilMode);
+    const before = game.snapshot();
+    const { board } = solveUpTo(game.position(), INTRICATE);
+    const result = game.autoSolve(INTRICATE);
+    assert.equal(result.mistake, false);
+    assert.ok(result.placed > 0);
+    assert.equal(game.usedSolver, true);
+    for (let cell = 0; cell < 81; cell++) {
+      assert.equal(game.values[cell], board.values[cell]);
+      if (!game.values[cell]) assert.equal(game.shownMarks(cell), board.cands[cell]);
+    }
+    // Nothing up to Intricate is left, so a hint names a harder technique.
+    const hint = game.hint();
+    assert.equal(hint.kind, 'step');
+    assert.ok(hint.level > INTRICATE);
+    // A second go finds nothing and leaves nothing to undo; one Undo takes the whole solve back.
+    assert.deepEqual(game.autoSolve(INTRICATE), { mistake: false, steps: 0, placed: 0 });
+    game.undo();
+    assert.equal(game.snapshot(), before);
+  });
+}
+
+test('the solving shortcut changes nothing on a board with a mistake', () => {
+  const game = deviousGame('erase');
+  const cell = game.values.indexOf(0);
+  game.enter(cell, Number(formatGrid(solve(parseGrid(DEVIOUS)).solution)[cell]) === 1 ? 2 : 1, SETTINGS);
+  const before = game.snapshot();
+  assert.equal(game.autoSolve(INTRICATE).mistake, true);
+  assert.equal(game.snapshot(), before);
+  assert.equal(game.usedSolver, false);
 });

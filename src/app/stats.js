@@ -2,7 +2,8 @@ import { LEVELS } from '../engine/levels.js';
 import { load, save } from './storage.js';
 
 // Statistics per level, keyed by level id:
-//   started, finished, timed (finished without Show Solution), bestSeconds, totalSeconds, hints
+//   started, finished, timed (finished without Show Solution or the solving shortcut), bestSeconds,
+//   totalSeconds, hints
 // and `daily`, the level ids finished for each date's daily games.
 
 const empty = () => ({ levels: {}, daily: {} });
@@ -26,7 +27,7 @@ export function recordFinish(stats, game) {
   const e = entry(stats, game.level);
   e.finished++;
   e.hints += game.hints;
-  if (!game.usedSolution) {
+  if (!game.usedSolution && !game.usedSolver) {
     e.timed++;
     e.totalSeconds += game.seconds;
     e.bestSeconds = e.bestSeconds === null ? game.seconds : Math.min(e.bestSeconds, game.seconds);

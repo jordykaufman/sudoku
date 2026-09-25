@@ -1,5 +1,5 @@
 import { ALL, BOX, COL, HOUSES, PEERS, ROW, bit } from '../engine/grid.js';
-import { HINT_PENALTY_SECONDS, checkWork, findHint } from '../engine/hint.js';
+import { HINT_PENALTY_SECONDS, checkWork, findHint, solveUpTo } from '../engine/hint.js';
 
 // Seconds added to the clock for help other than hints. These numbers are this app's own.
 export const PENALTY = {
@@ -56,6 +56,7 @@ export class Game {
     this.penalty = data.penalty ?? 0; // seconds
     this.hints = data.hints ?? 0;
     this.usedSolution = data.usedSolution ?? false;
+    this.usedSolver = data.usedSolver ?? false; // the shortcut that solves the easy part
     this.finished = data.finished ?? false;
     this.undoStack = data.undo ?? [];
     this.redoStack = data.redo ?? [];
@@ -79,6 +80,7 @@ export class Game {
       penalty: this.penalty,
       hints: this.hints,
       usedSolution: this.usedSolution,
+      usedSolver: this.usedSolver,
       finished: this.finished,
       undo: this.undoStack.slice(-400),
       redo: this.redoStack.slice(-400),
@@ -255,15 +257,20 @@ export class Game {
     return cells;
   }
 
-  // Finds a hint for the current position. Time is added once per position, so asking again
-  // without changing the board costs nothing.
-  hint() {
-    const result = findHint({
+  // The position as the engine's hint functions take it.
+  position() {
+    return {
       values: Uint8Array.from(this.values),
       givens: Uint8Array.from(this.givens),
       solution: Uint8Array.from(this.solution),
       marks: Uint16Array.from({ length: 81 }, (_, cell) => this.shownMarks(cell)),
-    });
+    };
+  }
+
+  // Finds a hint for the current position. Time is added once per position, so asking again
+  // without changing the board costs nothing.
+  hint() {
+    const result = findHint(this.position());
     const position = this.snapshot();
     if (result.kind !== 'solved' && this.lastHint !== position) {
       this.lastHint = position;
@@ -278,12 +285,7 @@ export class Game {
   // Checks the placed digits and the pencil marks against the solution. Time is added once
   // per position, and only when something is wrong.
   checkWork() {
-    const result = checkWork({
-      values: Uint8Array.from(this.values),
-      givens: Uint8Array.from(this.givens),
-      solution: Uint8Array.from(this.solution),
-      marks: Uint16Array.from({ length: 81 }, (_, cell) => this.shownMarks(cell)),
-    });
+    const result = checkWork(this.position());
     const position = this.snapshot();
     if (result.problems && this.lastCheck !== position) {
       this.lastCheck = position;
@@ -327,6 +329,33 @@ export class Game {
       ? [ROW[placed.cell], 9 + COL[placed.cell], 18 + BOX[placed.cell]].filter((h) => HOUSES[h].every((c) => this.values[c]))
       : [];
     return { placed: Boolean(placed), houses, digit: placed && this.digitCount(placed.digit) === 9 ? placed.digit : 0 };
+  }
+
+  // Makes every move that the techniques of level `level` and easier ones allow, as one change
+  // that Undo takes back, and leaves the candidates that remain as the pencil marks of every
+  // empty cell. A game solved this way is no longer timed. Returns { mistake: true } when the
+  // board has a mistake, and otherwise the number of steps made and of digits placed.
+  autoSolve(level) {
+    const nothing = { mistake: false, steps: 0, placed: 0 };
+    if (this.finished) return nothing;
+    const result = solveUpTo(this.position(), level);
+    if (result.kind === 'mistake') return { ...nothing, mistake: true };
+    const { steps, board } = result;
+    if (!steps.length) return nothing;
+    this.record();
+    let placed = 0;
+    for (let cell = 0; cell < 81; cell++) {
+      if (this.values[cell] || !board.values[cell]) continue;
+      this.values[cell] = board.values[cell];
+      placed++;
+    }
+    for (let cell = 0; cell < 81; cell++) {
+      if (this.values[cell]) continue;
+      if (this.pencilMode === 'auto') this.removed[cell] = this.allowed(cell) & ~board.cands[cell];
+      else this.marks[cell] = board.cands[cell];
+    }
+    this.usedSolver = true;
+    return { mistake: false, steps: steps.length, placed };
   }
 
   // Shows the solution of every empty cell as its only pencil mark.

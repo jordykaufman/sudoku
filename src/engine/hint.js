@@ -1,7 +1,8 @@
 import { Board } from './board.js';
 import { BOX, DIGITS, PEERS, POPCOUNT, bit } from './grid.js';
 import { TECHNIQUE_LEVEL } from './levels.js';
-import { nextStep } from './logic.js';
+import { logicalSolve, nextStep } from './logic.js';
+import { TECHNIQUES } from './techniques/index.js';
 import { cellList, cellName, houseName, plural, removalText } from './text.js';
 
 // Seconds added to the game clock for a hint, by the index of the level of the technique
@@ -23,7 +24,55 @@ export const HINT_PENALTY_SECONDS = [5, 5, 5, 5, 5, 5, 10, 10, 15, 20, 30, 45, 6
 //                                      leave out the right digit
 //   { kind: 'step', step, level }      the next logical step and the index of its level
 //   { kind: 'stuck', cell, stages }    no technique applies; the last stage gives a digit
-export function findHint({ values, givens, solution, marks = new Uint16Array(81) }) {
+export function findHint(position) {
+  const mistake = findMistake(position);
+  if (mistake) return mistake;
+  if (position.values.every((v) => v !== 0)) return { kind: 'solved' };
+
+  const board = boardFor(position);
+  const step = nextStep(board);
+  if (step) return { kind: 'step', step, level: TECHNIQUE_LEVEL.get(step.technique) };
+
+  // No technique applies. Point at the empty cell with the fewest candidates and give its digit.
+  const { values, solution } = position;
+  let cell = -1;
+  for (let i = 0; i < 81; i++) {
+    if (!values[i] && (cell < 0 || POPCOUNT[board.cands[i]] < POPCOUNT[board.cands[cell]])) cell = i;
+  }
+  return {
+    kind: 'stuck',
+    cell,
+    stages: [
+      { text: 'None of the techniques in this app applies here.' },
+      { text: `Look at ${cellName(cell)}.`, cells: [[cell, 'key']] },
+      { text: `${cellName(cell)} is ${solution[cell]}.`, cells: [[cell, 'target']], marks: [[cell, solution[cell], 'place']] },
+    ],
+  };
+}
+
+// Solves the player's position as far as the techniques of level `level` and easier ones go,
+// for the shortcut on the game screen. `position` is what findHint takes. Returns
+// { kind: 'mistake' } when a placed digit is wrong or a cell's pencil marks leave out its
+// answer, because solving from there could place wrong digits, and otherwise
+// { kind: 'done', steps, board } with the steps made and the board after them.
+export function solveUpTo(position, level) {
+  if (findMistake(position)) return { kind: 'mistake' };
+  const techniques = TECHNIQUES.filter((technique) => TECHNIQUE_LEVEL.get(technique.id) <= level);
+  const { steps, board } = logicalSolve(boardFor(position), { techniques });
+  return { kind: 'done', steps, board };
+}
+
+// The player's position as a board: the placed digits, and in each empty cell the candidates
+// the placed digits allow, narrowed to the cell's pencil marks when it has any.
+function boardFor({ values, givens, marks = new Uint16Array(81) }) {
+  const board = Board.fromValues(values, givens);
+  for (let cell = 0; cell < 81; cell++) if (!values[cell] && marks[cell]) board.cands[cell] &= marks[cell];
+  return board;
+}
+
+// The first mistake on the board as a hint: a wrong digit, or else an empty cell whose pencil
+// marks leave out its answer. Null when there is none.
+function findMistake({ values, solution, marks = new Uint16Array(81) }) {
   for (let cell = 0; cell < 81; cell++) {
     if (!values[cell] || values[cell] === solution[cell]) continue;
     const block = 18 + BOX[cell];
@@ -37,8 +86,6 @@ export function findHint({ values, givens, solution, marks = new Uint16Array(81)
       ],
     };
   }
-  if (values.every((v) => v !== 0)) return { kind: 'solved' };
-
   for (let cell = 0; cell < 81; cell++) {
     if (values[cell] || !marks[cell] || marks[cell] & bit(solution[cell])) continue;
     return {
@@ -55,26 +102,7 @@ export function findHint({ values, givens, solution, marks = new Uint16Array(81)
       ],
     };
   }
-
-  const board = Board.fromValues(values, givens);
-  for (let cell = 0; cell < 81; cell++) if (!values[cell] && marks[cell]) board.cands[cell] &= marks[cell];
-  const step = nextStep(board);
-  if (step) return { kind: 'step', step, level: TECHNIQUE_LEVEL.get(step.technique) };
-
-  // No technique applies. Point at the empty cell with the fewest candidates and give its digit.
-  let cell = -1;
-  for (let i = 0; i < 81; i++) {
-    if (!values[i] && (cell < 0 || POPCOUNT[board.cands[i]] < POPCOUNT[board.cands[cell]])) cell = i;
-  }
-  return {
-    kind: 'stuck',
-    cell,
-    stages: [
-      { text: 'None of the techniques in this app applies here.' },
-      { text: `Look at ${cellName(cell)}.`, cells: [[cell, 'key']] },
-      { text: `${cellName(cell)} is ${solution[cell]}.`, cells: [[cell, 'target']], marks: [[cell, solution[cell], 'place']] },
-    ],
-  };
+  return null;
 }
 
 // Checks everything the player has done against the solution, for the Check the board item on
