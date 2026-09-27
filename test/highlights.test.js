@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { Game } from '../src/app/game.js';
 import { fishCells, singleCells } from '../src/app/highlights.js';
 import { Board } from '../src/engine/board.js';
+import { formatGrid, parseGrid } from '../src/engine/grid.js';
+import { solve } from '../src/engine/solver.js';
 import { findBasicFishFor } from '../src/engine/techniques/fish.js';
 
 // Examples from test/fish.test.js.
@@ -91,8 +94,30 @@ test('a cell whose only pencil mark is the digit is a single too', () => {
   assert.equal(singleCells(view, 5).size, 0);
 });
 
-test('a cell without pencil marks counts as every digit the placed digits allow', () => {
+test('a cell without pencil marks takes no part', () => {
   const board = Board.fromCandidateGrid(XWING);
-  const view = { ...viewOf(board), shownMarks: () => 0, allowed: (cell) => board.cands[cell] };
-  assert.deepEqual(sorted(fishCells(view, 5)), [13, 16, 40, 43]);
+  const view = { ...viewOf(board), shownMarks: () => 0 };
+  for (let digit = 1; digit <= 9; digit++) {
+    assert.equal(singleCells(view, digit).size, 0, `no singles for ${digit}`);
+    assert.equal(fishCells(view, digit).size, 0, `no fish for ${digit}`);
+  }
+});
+
+// The position in Jordy's screenshot of 27 Sep 2026: every place a 9 can go is marked, and
+// nothing else. The placed digits leave R4C4 as the only place for 8 in column 4, but the
+// highlight shows only what the pencil marks say.
+test('only the pencil marks on the board count', () => {
+  const puzzle = '1.9.8.27......2.3.....4...5....276...3.4.5.9...239....8...7.....2.5......47.6.8.9';
+  const game = new Game({ kind: 'random', level: 10, puzzle, solution: formatGrid(solve(parseGrid(puzzle)).solution), pencilMode: 'manual' });
+  const cell = (name) => (Number(name[1]) - 1) * 9 + Number(name[3]) - 1;
+  for (const name of ['R2C4', 'R2C7', 'R3C4', 'R3C6', 'R3C7', 'R4C1', 'R4C2', 'R7C2', 'R7C4', 'R7C6', 'R8C1', 'R8C6']) {
+    game.toggleMark(cell(name), 9);
+  }
+  assert.equal(singleCells(game, 8).size, 0, 'no cell has an 8 mark');
+  // Column 5 already has an 8, so an 8 marked in R5C5 is left out.
+  game.toggleMark(cell('R5C5'), 8);
+  assert.equal(singleCells(game, 8).size, 0);
+  // An 8 marked in R4C4 is the only 8 mark in its row, column and block.
+  game.toggleMark(cell('R4C4'), 8);
+  assert.deepEqual([...singleCells(game, 8)], [cell('R4C4')]);
 });
