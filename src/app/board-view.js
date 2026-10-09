@@ -30,7 +30,8 @@ export class BoardView {
   // `stage` is the hint stage being shown, or null. While a stage is shown its highlights
   // replace the normal digit highlighting. The selected cell is drawn either way, so a screen
   // that wants the selection hidden during a stage, as the game does during a hint, passes -1. `singles` and `fish` are cells to
-  // mark for the highlighted digit (src/app/highlights.js); they are ignored during a hint.
+  // mark (src/app/highlights.js): `singles` for the highlighted digit, or with none every cell a
+  // hold fills, and `fish` for the highlighted digit. Both are ignored during a hint.
   render({ game, settings, selectedCell = -1, highlightDigit = 0, stage = null, wrong = new Set(), clash = new Set(), singles = new Set(), fish = new Set() }) {
     const houses = new Set(stage?.houses ?? []);
     const cellRoles = new Map((stage?.cells ?? []).map(([cell, role]) => [cell, role]));
@@ -55,7 +56,7 @@ export class BoardView {
       if (cell === selectedCell) cls.push('selected');
       if (hl && value === hl) cls.push('hl-digit');
       if (hl && shown & bit(hl)) cls.push('hl-mark');
-      if (hl && !stage && singles.has(cell)) cls.push('hl-single');
+      if (!stage && singles.has(cell)) cls.push('hl-single');
       if (hl && !stage && fish.has(cell)) cls.push('hl-fish');
       const role = cellRoles.get(cell);
       if (role) cls.push(role === 'a' || role === 'b' ? `color-${role}` : role);

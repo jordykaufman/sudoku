@@ -15,6 +15,14 @@ test('holding a cell shown as the only place left for the highlighted digit plac
   assert.equal(hold({ marks: bit(2) | bit(9), single: true, highlightDigit: 9 }), 9);
 });
 
+test('holding a cell with the only pencil mark for a digit in its block places that digit, whatever is highlighted', () => {
+  assert.equal(hold({ marks: bit(2) | bit(8), blockDigit: 8 }), 8);
+  assert.equal(hold({ marks: bit(2) | bit(8), highlightDigit: 5, blockDigit: 8 }), 8);
+  assert.equal(hold({ marks: bit(2) | bit(8), single: true, highlightDigit: 2, blockDigit: 8 }), 2, 'the highlighted single comes first');
+  // With no digit highlighted, the board marks the cells a hold fills, so `single` is true there.
+  assert.equal(hold({ marks: bit(2) | bit(8), single: true, highlightDigit: 0, blockDigit: 8 }), 8);
+});
+
 test('any other hold counts as a tap', () => {
   assert.equal(hold({ marks: bit(2) | bit(9) }), 0, 'two marks and nothing highlighted');
   assert.equal(hold({ marks: bit(2) | bit(9), highlightDigit: 9 }), 0, 'highlighted but not a single');

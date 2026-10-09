@@ -4,16 +4,17 @@ import { techniqueById } from '../engine/techniques/index.js';
 import { plural } from '../engine/text.js';
 import { BoardView } from './board-view.js';
 import { formatTime, h, onPress } from './dom.js';
-import { fishCells, singleCells } from './highlights.js';
+import { blockSingle, fishCells, forcedCells, singleCells } from './highlights.js';
 import { Pads } from './pads.js';
 
 // The digit a hold on a cell places, or 0 when the hold should count as a tap. A cell with
-// one pencil mark left can only be that digit, whatever is highlighted; otherwise the cell
-// has to be shown as the only place left for the highlighted digit.
-export function holdDigit({ value, marks, single, highlightDigit }) {
+// one pencil mark left can only be that digit, whatever is highlighted. Next comes the
+// highlighted digit, when the cell is shown as the only place left for it, and then
+// `blockDigit`, the digit whose pencil mark in the cell is the only one in its block.
+export function holdDigit({ value, marks, single, highlightDigit, blockDigit = 0 }) {
   if (value) return 0;
   if (POPCOUNT[marks] === 1) return DIGITS[marks][0];
-  return single ? highlightDigit : 0;
+  return single && highlightDigit ? highlightDigit : blockDigit;
 }
 
 // Four quick taps on the level name at the top make every move that the techniques up to this
@@ -32,7 +33,7 @@ export class PlayScreen {
     this.selectedCell = -1;
     this.selectedDigit = 0;
     this.selectedMode = 'place'; // what the selected digit does to a cell: 'place' or 'mark'
-    this.singles = new Set(); // cells shown as the only place left for the highlighted digit
+    this.singles = new Set(); // cells shown in the stronger colour (src/app/highlights.js)
     this.erasing = false;
     this.panel = 'pad'; // 'pad', 'menu' (hint options), 'hint', 'check' or 'note'
     this.hint = null;
@@ -157,6 +158,7 @@ export class PlayScreen {
         marks: this.game.shownMarks(cell),
         single: this.singles.has(cell),
         highlightDigit: this.highlightDigit(),
+        blockDigit: blockSingle(this.game, cell),
       });
       if (digit) {
         this.act(cell, digit, false);
@@ -376,8 +378,10 @@ export class PlayScreen {
     // The check result highlights its cells the way a hint stage does.
     const stage = this.panel === 'hint' ? this.stages()[this.stageIndex] : this.panel === 'check' ? this.check : null;
     const hl = this.highlightDigit();
-    const extras = settings.highlight && hl && !stage && !game.finished;
-    this.singles = extras && settings.singles ? singleCells(game, hl) : new Set();
+    const extras = settings.highlight && !stage && !game.finished;
+    // With a digit highlighted, the stronger colour shows where that digit must go; with none,
+    // it shows every cell a hold fills.
+    this.singles = extras && settings.singles ? (hl ? singleCells(game, hl) : forcedCells(game)) : new Set();
     this.board.render({
       game,
       settings,
@@ -386,7 +390,7 @@ export class PlayScreen {
       highlightDigit: hl,
       stage,
       singles: this.singles,
-      fish: extras && settings.fish ? fishCells(game, hl) : new Set(),
+      fish: extras && hl && settings.fish ? fishCells(game, hl) : new Set(),
       clash: settings.mistakes === 'off' ? new Set() : game.clashCells(),
       // While the check is shown, the digits it calls wrong are drawn in red whatever the
       // Mark mistakes setting says.
