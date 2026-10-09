@@ -15,15 +15,18 @@ export class Pads {
   }
 
   // `countOf(digit)` says how many of a digit are placed, so that a digit with all nine placed
-  // is shown in green. `state` shades the whole row: 'solvable', 'unsolvable' or ''.
-  render({ font, selectedDigit = 0, selectedMode = 'place', countOf = () => 0, state = '' }) {
+  // is shown in green. `marks` are the pencil marks of the selected cell, shaded on the pencil
+  // mark pad so they can be turned off without looking at the cell. `state` shades the whole
+  // row: 'solvable', 'unsolvable' or ''.
+  render({ font, selectedDigit = 0, selectedMode = 'place', countOf = () => 0, marks = 0, state = '' }) {
     for (const { mode, buttons } of this.pads) {
       buttons.forEach((button, i) => {
         const digit = i + 1;
         button.textContent = digitLabel(digit, font);
         button.setAttribute('aria-label', `${mode === 'mark' ? 'pencil mark' : 'digit'} ${digit}`);
         const active = digit === selectedDigit && mode === selectedMode;
-        const className = [active ? 'active' : '', countOf(digit) === 9 ? 'complete' : ''].join(' ').trim();
+        const marked = mode === 'mark' && marks & (1 << i);
+        const className = [active ? 'active' : '', countOf(digit) === 9 ? 'complete' : '', marked ? 'marked' : ''].join(' ').trim();
         if (button.className !== className) button.className = className;
       });
     }

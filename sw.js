@@ -1,7 +1,7 @@
 // Offline support: caches every file the app needs, answers requests from the cache first,
 // and replaces the cache when VERSION changes. test/sw.test.js checks that FILES lists every
 // file the app loads.
-const VERSION = '20261009-2333';
+const VERSION = '20261009-2335';
 const CACHE = `sudoku-${VERSION}`;
 const FILES = [
   './',

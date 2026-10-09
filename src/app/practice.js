@@ -219,6 +219,7 @@ export class PracticeScreen {
       selectedDigit: this.selectedDigit,
       selectedMode: this.selectedMode,
       countOf: (digit) => this.board.values.reduce((n, v) => n + (v === digit ? 1 : 0), 0),
+      marks: this.selectedCell >= 0 ? view.shownMarks(this.selectedCell) : 0,
     });
   }
 }

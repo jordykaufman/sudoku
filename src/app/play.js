@@ -17,11 +17,9 @@ export function holdDigit({ value, marks, single, highlightDigit, blockDigit = 0
   return single && highlightDigit ? highlightDigit : blockDigit;
 }
 
-// Four quick taps on the level name at the top make every move that the techniques up to this
+// A long press on the level name at the top makes every move that the techniques up to this
 // level allow. Nothing on the screen shows it.
 const SOLVE_LEVEL = LEVELS.findIndex((level) => level.id === 'intricate');
-const TAPS_TO_SOLVE = 4;
-const TAP_GAP_MS = 700; // the longest pause between two of those taps
 
 
 // The game screen. `app` provides: settings, saveGame(game), finishGame(game), openMenu()
@@ -34,13 +32,12 @@ export class PlayScreen {
     this.selectedDigit = 0;
     this.selectedMode = 'place'; // what the selected digit does to a cell: 'place' or 'mark'
     this.singles = new Set(); // cells shown in the stronger colour (src/app/highlights.js)
+    this.digitSingles = new Set(); // the ones among them that are singles for the highlighted digit
     this.erasing = false;
     this.panel = 'pad'; // 'pad', 'menu' (hint options), 'hint', 'check' or 'note'
     this.hint = null;
     this.check = null; // the result of Check the board, while it is shown
     this.note = ''; // what the solving shortcut did, while it is shown
-    this.titleTaps = 0;
-    this.lastTitleTap = 0;
     this.stageIndex = 0;
     this.flash = ''; // 'solvable' or 'unsolvable' for a moment after asking
     this.ticks = 0;
@@ -49,7 +46,7 @@ export class PlayScreen {
     this.board.onBlinkEnd = () => this.render();
     this.title = h('div', { class: 'title' });
     onPress(this.title, (held) => {
-      if (!held) this.tapTitle();
+      if (held) this.autoSolve();
     });
     this.clock = h('div', { class: 'clock' });
     this.pads = new Pads((digit, mode) => this.tapDigit(digit, mode));
@@ -156,7 +153,7 @@ export class PlayScreen {
       const digit = holdDigit({
         value: this.game.values[cell],
         marks: this.game.shownMarks(cell),
-        single: this.singles.has(cell),
+        single: this.digitSingles.has(cell),
         highlightDigit: this.highlightDigit(),
         blockDigit: blockSingle(this.game, cell),
       });
@@ -297,15 +294,6 @@ export class PlayScreen {
     this.afterMove();
   }
 
-  tapTitle() {
-    const now = performance.now();
-    this.titleTaps = now - this.lastTitleTap < TAP_GAP_MS ? this.titleTaps + 1 : 1;
-    this.lastTitleTap = now;
-    if (this.titleTaps < TAPS_TO_SOLVE) return;
-    this.titleTaps = 0;
-    this.autoSolve();
-  }
-
   // Makes every move the techniques up to SOLVE_LEVEL allow, then says what it did.
   autoSolve() {
     if (this.panel !== 'pad' || this.game.finished) return;
@@ -379,9 +367,10 @@ export class PlayScreen {
     const stage = this.panel === 'hint' ? this.stages()[this.stageIndex] : this.panel === 'check' ? this.check : null;
     const hl = this.highlightDigit();
     const extras = settings.highlight && !stage && !game.finished;
-    // With a digit highlighted, the stronger colour shows where that digit must go; with none,
-    // it shows every cell a hold fills.
-    this.singles = extras && settings.singles ? (hl ? singleCells(game, hl) : forcedCells(game)) : new Set();
+    // The stronger colour shows every cell a hold fills: where the highlighted digit must go,
+    // and, whatever is highlighted, the cells the pencil marks fill on their own.
+    this.digitSingles = extras && settings.singles && hl ? singleCells(game, hl) : new Set();
+    this.singles = extras && settings.singles ? new Set([...this.digitSingles, ...forcedCells(game)]) : new Set();
     this.board.render({
       game,
       settings,
@@ -466,6 +455,7 @@ export class PlayScreen {
       selectedDigit: this.selectedDigit,
       selectedMode: this.selectedMode,
       countOf: (digit) => game.digitCount(digit),
+      marks: this.selectedCell >= 0 ? game.shownMarks(this.selectedCell) : 0,
       state: settings.showSolvable ? (game.isSolvable() ? 'solvable' : 'unsolvable') : this.flash,
     });
     this.eraseButton.className = this.erasing ? 'active' : '';
