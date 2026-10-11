@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Game } from '../src/app/game.js';
-import { blockSingle, fishCells, forcedCells, singleCells } from '../src/app/highlights.js';
+import { fishCells, forcedCells, singleCells } from '../src/app/highlights.js';
 import { Board } from '../src/engine/board.js';
 import { formatGrid, parseGrid } from '../src/engine/grid.js';
 import { solve } from '../src/engine/solver.js';
@@ -122,39 +122,8 @@ test('only the pencil marks on the board count', () => {
   assert.deepEqual([...singleCells(game, 8)], [cell('R4C4')]);
 });
 
-// The Annoying position in Jordy's screenshot of 28 Sep 2026, with every candidate marked.
-const ANNOYING = `
-19   19   7    | 248   248  6     | 248  3    5
-5    6    2    | 1489  489  3     | 489  7    18
-4    3    8    | 1259  259  7     | 269  29   16
-8    59   4    | 259   6    259   | 3    1    7
-39   7    359  | 24589 1    24589 | 2468 248  68
-16   2    16   | 7     3    48    | 5    48   9
-2    159  159  | 3     7    1589  | 89   6    4
-1369 1459 1356 | 14589 4589 14589 | 7    589  2
-7    8    59   | 6     2459 2459  | 1    59   3`;
-
-test('with no digit highlighted, the cells a hold fills are marked', () => {
-  const view = viewOf(Board.fromCandidateGrid(ANNOYING));
-  // R8C2 holds the only 4 in block 7, and no cell has one pencil mark left.
-  assert.deepEqual([...forcedCells(view)], [64]);
-  assert.equal(blockSingle(view, 64), 4);
-  assert.equal(blockSingle(view, 63), 0, 'R8C1 shares its 3 and 6 with R8C3');
-  // With R2C9 down to its 1, it is marked too.
-  const lone = viewOf(Board.fromCandidateGrid(ANNOYING.replace('7    18', '7    (1)')));
-  assert.deepEqual(sorted(forcedCells(lone)), [17, 64]);
-});
-
-test('a cell alone in its block with two digits gets no block digit', () => {
-  // Without the 3 and 6 in R8C3, R8C1 holds the only 3 and the only 6 in block 7, which the
-  // marks cannot both be right about.
-  const view = viewOf(Board.fromCandidateGrid(ANNOYING.replace('1459 1356 |', '1459 15   |')));
-  assert.equal(blockSingle(view, 63), 0);
-  assert.equal(forcedCells(view).has(63), false);
-});
-
 // The Intricate position in Jordy's screenshot of 11 Oct 2026, with the player's own pencil
-// marks. The 8 is selected.
+// marks.
 const INTRICATE = `
 7    9    12   | 16   26   5    | 8    3    4
 6    8    15   | (1)  4    3    | 7    2    9
@@ -166,13 +135,10 @@ const INTRICATE = `
 1    4    9    | 2    5    678  | 3    67   68
 5    7    8    | 46   3    16   | 9    146  2`;
 
-test('with a digit highlighted, a block single for another digit is not a cell a hold fills', () => {
+test('whatever is highlighted, a hold fills only the cells with one pencil mark left', () => {
   const view = viewOf(Board.fromCandidateGrid(INTRICATE));
-  // R2C3 holds the only 5 mark in block 1.
-  assert.equal(blockSingle(view, 11), 5);
-  assert.equal(forcedCells(view).has(11), true, 'with nothing highlighted it is');
-  // With the 8 highlighted: the cells with one pencil mark left, R2C4 and R3C3.
-  assert.deepEqual(sorted(forcedCells(view, 8)), [12, 20]);
-  // And the 8s: R3C6 is the only 8 in row 3, and R7C4 the only 8 in column 4.
+  // R2C4 and R3C3 have one mark left. R2C3 holds the only 5 mark in block 1 and is left out.
+  assert.deepEqual(sorted(forcedCells(view)), [12, 20]);
+  // With the 8 highlighted, R3C6 is the only 8 in row 3, and R7C4 the only 8 in column 4.
   assert.deepEqual(sorted(singleCells(view, 8)), [23, 57]);
 });

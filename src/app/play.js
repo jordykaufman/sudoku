@@ -4,19 +4,16 @@ import { techniqueById } from '../engine/techniques/index.js';
 import { plural } from '../engine/text.js';
 import { BoardView } from './board-view.js';
 import { formatTime, h, onPress } from './dom.js';
-import { blockSingle, fishCells, forcedCells, singleCells } from './highlights.js';
+import { fishCells, forcedCells, singleCells } from './highlights.js';
 import { Pads } from './pads.js';
 
 // The digit a hold on a cell places, or 0 when the hold should count as a tap. A cell with
-// one pencil mark left can only be that digit, whatever is highlighted. With a digit
-// highlighted, a hold places only that digit, when the cell is shown as the only place left
-// for it. With none, it places `blockDigit`, the digit whose pencil mark in the cell is the
-// only one in its block.
-export function holdDigit({ value, marks, single, highlightDigit, blockDigit = 0 }) {
+// one pencil mark left can only be that digit, whatever is highlighted; otherwise the cell
+// has to be shown as the only place left for the highlighted digit.
+export function holdDigit({ value, marks, single, highlightDigit }) {
   if (value) return 0;
   if (POPCOUNT[marks] === 1) return DIGITS[marks][0];
-  if (highlightDigit) return single ? highlightDigit : 0;
-  return blockDigit;
+  return single && highlightDigit ? highlightDigit : 0;
 }
 
 // A long press on the level name at the top makes every move that the techniques up to this
@@ -159,7 +156,6 @@ export class PlayScreen {
         marks: this.game.shownMarks(cell) & this.game.allowed(cell),
         single: this.digitSingles.has(cell),
         highlightDigit: this.highlightDigit(),
-        blockDigit: blockSingle(this.game, cell),
       });
       if (digit) {
         this.act(cell, digit, false);
@@ -371,11 +367,10 @@ export class PlayScreen {
     const stage = this.panel === 'hint' ? this.stages()[this.stageIndex] : this.panel === 'check' ? this.check : null;
     const hl = this.highlightDigit();
     const extras = settings.highlight && !stage && !game.finished;
-    // The stronger colour shows every cell a hold fills: where the highlighted digit must go and
-    // the cells with one pencil mark left, or with no digit highlighted, the cells the pencil
-    // marks fill on their own.
+    // The stronger colour shows every cell a hold fills: where the highlighted digit must go and,
+    // whatever is highlighted, the cells with one pencil mark left.
     this.digitSingles = extras && settings.singles && hl ? singleCells(game, hl) : new Set();
-    this.singles = extras && settings.singles ? new Set([...this.digitSingles, ...forcedCells(game, hl)]) : new Set();
+    this.singles = extras && settings.singles ? new Set([...this.digitSingles, ...forcedCells(game)]) : new Set();
     this.board.render({
       game,
       settings,
