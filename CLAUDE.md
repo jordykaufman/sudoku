@@ -6,7 +6,7 @@ A personal remake of the iPhone game Enjoy Sudoku.
 
 - For Jordy's own iPhone, not for release in the App Store.
 - Runs as a Home Screen web app (HTML and JavaScript, with a service worker for offline play), not a native app.
-- Hosted on GitHub Pages under the jordykaufman account. GitHub says Pages sites are public, and on a free plan the repo must be public too (https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site). Push every change to `main` without asking (Jordy, 11 Oct 2026: "Its just a game. Always push").
+- Hosted on GitHub Pages under the jordykaufman account. GitHub says Pages sites are public, and on a free plan the repo must be public too (https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site). Commit every change to `main` and push it without asking, so it goes live straight away (Jordy, 11 Oct 2026).
 - First version: the core game plus Statistics, and Skins and fonts. Not included: scanning puzzles with the camera, typing in a puzzle.
 
 ## How the original worked (sources)
