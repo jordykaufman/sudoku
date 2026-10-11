@@ -32,11 +32,12 @@ export function blockSingle(game, cell) {
   return alone.length === 1 ? alone[0] : 0;
 }
 
-// With no digit highlighted: the cells a hold fills, whatever digit they need. A cell with one
-// pencil mark left, or with the only pencil mark for a digit in its block.
-export function forcedCells(game) {
+// The cells a hold fills whatever digit they need: a cell with one pencil mark left, and, with
+// no digit highlighted (`digit` 0), a cell with the only pencil mark for a digit in its block.
+// With a digit highlighted, a hold places only that digit or a cell's last pencil mark.
+export function forcedCells(game, digit = 0) {
   const cells = new Set();
-  for (let cell = 0; cell < 81; cell++) if (POPCOUNT[marked(game, cell)] === 1 || blockSingle(game, cell)) cells.add(cell);
+  for (let cell = 0; cell < 81; cell++) if (POPCOUNT[marked(game, cell)] === 1 || (!digit && blockSingle(game, cell))) cells.add(cell);
   return cells;
 }
 
