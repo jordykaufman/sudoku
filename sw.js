@@ -1,7 +1,7 @@
 // Offline support: caches every file the app needs, answers requests from the cache first,
 // and replaces the cache when VERSION changes. test/sw.test.js checks that FILES lists every
 // file the app loads.
-const VERSION = '20261011-1331';
+const VERSION = '20261011-1335';
 const CACHE = `sudoku-${VERSION}`;
 const FILES = [
   './',
@@ -52,11 +52,14 @@ const FILES = [
   'src/engine/techniques/wings.js',
 ];
 
+// GitHub Pages lets the browser keep a file for 10 minutes, so the files are fetched past the
+// browser's cache. Otherwise a version published within 10 minutes of the last one would be
+// cached with the last one's files.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(FILES))
+      .then((cache) => cache.addAll(FILES.map((file) => new Request(file, { cache: 'reload' }))))
       .then(() => self.skipWaiting()),
   );
 });

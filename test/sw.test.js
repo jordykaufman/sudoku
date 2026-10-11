@@ -30,3 +30,8 @@ test('the service worker caches every file the app loads', () => {
   ];
   assert.deepEqual([...listed].sort(), [...expected].sort());
 });
+
+test('the service worker fetches the files past the browser cache', () => {
+  const source = readFileSync(join(ROOT, 'sw.js'), 'utf8');
+  assert.match(source, /cache\.addAll\(FILES\.map\(\(file\) => new Request\(file, \{ cache: 'reload' \}\)\)\)/);
+});
