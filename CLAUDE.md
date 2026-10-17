@@ -50,5 +50,12 @@ A personal remake of the iPhone game Enjoy Sudoku.
 - `npm test` runs the tests in `test/`.
 - `node scripts/fuzz.js --text 1` solves random puzzles and checks every step against the solution, that techniques don't change the board, and the hint conventions.
 - `node scripts/survey.js` reports how often each level and technique comes up in generated puzzles.
-- Before publishing: run `node scripts/version.js` so installed copies download the new files. `sw.js` lists every file the app needs; `test/sw.test.js` checks the list. An installed copy looks for a new version whenever it comes to the foreground and reloads itself once the new files are cached (`keepUpdated` in `src/app/main.js`). The worker fetches them past the browser's cache, because GitHub Pages lets a browser keep a file for 10 minutes, and two versions published within that time once left the phone running the older files.
+- Before publishing: run `node scripts/version.js` so installed copies download the new files (it sets the version in `sw.js` and `hangman/sw.js`). `sw.js` lists every file the app needs; `test/sw.test.js` checks the list. An installed copy looks for a new version whenever it comes to the foreground and reloads itself once the new files are cached (`keepUpdated` in `src/app/main.js`). The worker fetches them past the browser's cache, because GitHub Pages lets a browser keep a file for 10 minutes, and two versions published within that time once left the phone running the older files.
 - Local preview: `python3 -m http.server 8123` in this folder (`.claude/launch.json`).
+
+## Hangman
+
+- A separate two-player game in `hangman/`, served at `/sudoku/hangman/` and added to the Home Screen on its own. Jordy asked for it on 17 Oct 2026, with a choice of 4 to 16 body parts.
+- Players take turns: one chooses a word or phrase (letters, spaces, hyphens and apostrophes, with an optional clue) while the other looks away, and the other guesses letters or the whole word. A wrong guess of either kind draws one body part. The guesser scores if they get the word, the chooser if the figure is completed or the guesser gives up.
+- `src/game.js` the rules, with no DOM. `src/figure.js` which parts the figure has for each number and the drawing: the head, body, arms and legs always (with 4 the arms are one step and the legs another, with 5 the arms are one step), then eyes, mouth, hands, feet, nose and ears, a pair always together. `src/main.js` the screens.
+- It has its own `sw.js` and caches named `hangman-`, apart from the Sudoku app's. `test/hangman.test.js` checks its file list.

@@ -1,0 +1,125 @@
+/* Colours follow the phone's light or dark appearance. Light is the Sudoku app's Paper skin. */
+:root {
+  color-scheme: light dark;
+  --bg: #f4f1ea; --panel: #fffdf8; --button: #e6e1d6; --text: #1d1d1f; --muted: #6b6b70; --line: #cbc4b5;
+  --ink: #2b2a27; --gallows: #8f8572; --accent: #2356a8; --accent-text: #ffffff;
+  --ok: #2e7d32; --ok-bg: #d5eed9; --danger: #c62828; --danger-bg: #f5d5d5;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a; --panel: #1f2125; --button: #2c2f34; --text: #ececec; --muted: #9a9aa0; --line: #484c53;
+    --ink: #ececec; --gallows: #8a8d93; --accent: #4f8ef0; --accent-text: #ffffff;
+    --ok: #6fd48b; --ok-bg: #1f4a2b; --danger: #ff6b6b; --danger-bg: #4a1f1f;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+body {
+  font: 17px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+button, input { font: inherit; color: inherit; }
+button { touch-action: manipulation; cursor: pointer; }
+button:disabled { cursor: default; }
+h1 { font-size: 34px; margin: 8px 0 0; }
+h2 { font-size: 24px; margin: 4px 0 0; }
+p { margin: 0; }
+
+.screen { max-width: 520px; margin: 0 auto; padding: 12px 16px 20px; display: flex; flex-direction: column; gap: 12px; min-height: 100vh; min-height: 100dvh; }
+.muted { color: var(--muted); }
+.center { text-align: center; }
+.error { color: var(--danger); min-height: 1.4em; }
+.error:empty { min-height: 0; }
+
+.button { border: 0; border-radius: 12px; padding: 13px 16px; background: var(--button); font-weight: 600; width: 100%; }
+.button.primary { background: var(--accent); color: var(--accent-text); }
+.link { border: 0; background: none; color: var(--accent); padding: 8px 0 8px 12px; font-weight: 600; }
+.actions { display: flex; flex-direction: column; gap: 8px; }
+.actions.row { flex-direction: row; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > span { font-weight: 600; font-size: 15px; color: var(--muted); }
+.field input[type="text"], .field input[type="password"], .solve-input {
+  border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel); width: 100%; font-size: 18px;
+}
+.field input:focus, .solve-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.masked { -webkit-text-security: disc; }
+.check { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.check input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+
+.stepper { display: flex; align-items: center; gap: 16px; }
+.step { width: 48px; height: 44px; border: 0; border-radius: 12px; background: var(--button); font-size: 24px; font-weight: 600; line-height: 1; }
+.step:disabled { opacity: 0.4; }
+.value { font-size: 28px; font-weight: 700; min-width: 2ch; text-align: center; font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--accent); margin: 4px 0; }
+.preview .figure-box { height: 200px; }
+
+/* Scores */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.players { display: flex; gap: 8px; flex: 1; min-width: 0; }
+.player { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr auto; column-gap: 8px; padding: 6px 10px; border-radius: 12px; background: var(--panel); border: 2px solid transparent; }
+.player.guessing { border-color: var(--accent); }
+.player .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player .score { font-weight: 700; font-size: 20px; grid-row: span 2; align-self: center; font-variant-numeric: tabular-nums; }
+.player .role { font-size: 13px; color: var(--muted); }
+
+/* The figure */
+.figure-box { display: flex; justify-content: center; }
+.figure { display: block; width: 100%; height: 100%; overflow: visible; }
+/* While playing, the figure takes the height the rest of the screen leaves. */
+.play .figure-box { flex: 1 1 0; position: relative; min-height: 130px; max-height: 300px; }
+.play .figure-box .figure { position: absolute; inset: 0; }
+.figure path, .figure circle { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.figure .gallows { stroke: var(--gallows); stroke-width: 6; }
+.figure .rope { stroke: var(--gallows); stroke-width: 3; }
+.figure .dot { fill: var(--ink); stroke: none; }
+.figure .fresh path { stroke-dasharray: 1 2; animation: draw 0.5s ease-out both; }
+.figure .fresh .dot { transform-box: fill-box; transform-origin: center; animation: pop 0.3s ease-out both; }
+.figure.lost .body { transform-origin: 140px 20px; animation: sway 2.4s ease-in-out infinite; }
+.figure.lost path:not(.gallows):not(.rope) { stroke: var(--danger); }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .figure .fresh path, .figure .fresh .dot, .figure.lost .body { animation: none; }
+}
+
+/* Guessing */
+.turn { font-weight: 600; text-align: center; display: flex; flex-direction: column; gap: 2px; }
+.clue { font-weight: 400; color: var(--muted); }
+.tally { text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+.message { text-align: center; font-weight: 600; min-height: 1.4em; }
+.result { text-align: center; }
+.result.won { color: var(--ok); }
+.result.lost { color: var(--danger); }
+
+.word {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 0.9em; padding: 4px 0;
+  font-weight: 700; font-size: min(var(--size), calc((min(100vw, 520px) - 40px) / (var(--longest) * 1.3)));
+}
+.group { display: flex; gap: 0.25em; }
+.slot { width: 1em; height: 1.3em; border-bottom: 3px solid var(--line); text-align: center; line-height: 1.3em; }
+.slot.mark { border-bottom-color: transparent; width: auto; min-width: 0.4em; }
+.slot.missed { color: var(--danger); }
+
+.keyboard { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.keys { display: flex; justify-content: center; gap: 6px; }
+.key {
+  flex: 1; max-width: 44px; height: 50px; border: 0; border-radius: 8px; padding: 0;
+  background: var(--panel); box-shadow: 0 1px 0 var(--line); font-size: 20px; font-weight: 600;
+}
+.key.hit { background: var(--ok-bg); color: var(--ok); box-shadow: none; }
+.key.miss { background: var(--danger-bg); color: var(--danger); box-shadow: none; text-decoration: line-through; }
+.solve { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.screen.play .actions:last-child:not(.row) { margin-top: auto; }
+
+/* Short screens, such as the iPhone SE: a smaller figure and keys keep the buttons in view. */
+@media (max-height: 700px) {
+  .screen { gap: 8px; padding-top: 8px; }
+  .key { height: 44px; }
+  .keyboard { gap: 6px; }
+  .button { padding: 11px 14px; }
+}
