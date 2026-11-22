@@ -419,7 +419,11 @@ export class PlayScreen {
     }
 
     if (this.panel === 'check' || this.panel === 'note') {
-      const [text, close] = this.panel === 'check' ? [this.check.text, () => this.closeCheck()] : [this.note, () => this.closeNote()];
+      // The check's lines go one under the other, green when all is right and red when not.
+      const [text, close] =
+        this.panel === 'check'
+          ? [this.check.lines.map((line) => h('div', { class: `line ${line.ok ? 'ok' : 'bad'}` }, line.text)), () => this.closeCheck()]
+          : [this.note, () => this.closeNote()];
       this.controls.replaceChildren(
         h('div', { class: 'panel' }, h('div', { class: 'text' }, text), h('div', { class: 'buttons' }, h('button', { onclick: close }, 'Done'))),
       );

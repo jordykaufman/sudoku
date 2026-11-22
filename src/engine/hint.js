@@ -111,8 +111,10 @@ function findMistake({ values, solution, marks = new Uint16Array(81) }) {
 // pencil mark for a digit that is already placed in the cell's row, column or block. A cell
 // without pencil marks claims nothing, so it is never a mistake.
 //
-// Returns { problems, text, cells, marks }, where `problems` counts the mistakes and `cells`
-// and `marks` highlight them the way a hint's stages do.
+// Returns { problems, lines, text, cells, marks }, where `problems` counts the mistakes, `lines`
+// holds the line about the digits and the one about the pencil marks as { ok, text }, `text`
+// is the lines run together, and `cells` and `marks` highlight the mistakes the way a hint's
+// stages do.
 export function checkWork({ values, givens, solution, marks = new Uint16Array(81) }) {
   const wrong = [];
   const missing = [];
@@ -137,28 +139,35 @@ export function checkWork({ values, givens, solution, marks = new Uint16Array(81
     }
   }
 
-  const sentences = [];
-  if (wrong.length) sentences.push(`${cellList(wrong)} ${plural(wrong.length, 'holds a wrong digit', 'hold wrong digits')}.`);
-  else sentences.push('Every digit on the board is right.');
+  // One line about the digits and, when there are pencil marks, one about them, each shown on
+  // its own and coloured by whether it found a problem.
+  const lines = [
+    wrong.length
+      ? { ok: false, text: `${cellList(wrong)} ${plural(wrong.length, 'holds a wrong digit', 'hold wrong digits')}.` }
+      : { ok: true, text: 'Every digit on the board is right.' },
+  ];
+  const markSentences = [];
   if (missing.length) {
-    sentences.push(
+    markSentences.push(
       `${cellList(missing)} ${plural(missing.length, 'has no pencil mark for its answer', 'have no pencil mark for their answer')}.`,
     );
   }
   if (stale.length) {
-    sentences.push(
+    markSentences.push(
       `${plural(stale.length, 'One pencil mark is', 'Some pencil marks are')} for ${plural(stale.length, 'a digit', 'digits')} ` +
         `already placed in the same row, column or block. ${removalText(stale)}`,
     );
   }
-  if (!missing.length && !stale.length && marked) sentences.push('The pencil marks are right too.');
+  if (markSentences.length) lines.push({ ok: false, text: markSentences.join(' ') });
+  else if (marked) lines.push({ ok: true, text: 'The pencil marks are right.' });
 
   return {
     problems: wrong.length + missing.length + stale.length,
     wrong,
     missing,
     stale,
-    text: sentences.join(' '),
+    lines,
+    text: lines.map((line) => line.text).join(' '),
     // `mistake` is this check's own cell role, drawn in the colour of a wrong digit.
     cells: wrong.map((cell) => [cell, 'mistake']).concat(missing.map((cell) => [cell, 'key'])),
     marks: missing.map((cell) => [cell, solution[cell], 'place']).concat(stale.map(([cell, digit]) => [cell, digit, 'elim'])),

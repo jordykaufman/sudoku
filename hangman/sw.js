@@ -2,7 +2,7 @@
 // cache first, and replaces the cache when VERSION changes. test/hangman.test.js checks that
 // FILES lists every file the game loads. The Sudoku app's worker shares the origin, so this one
 // keeps to caches named hangman-.
-const VERSION = '20261017-0250';
+const VERSION = '20261122-0634';
 const CACHE = `hangman-${VERSION}`;
 const FILES = [
   './',

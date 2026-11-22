@@ -186,6 +186,10 @@ table.stats th:first-child, table.stats td:first-child { text-align: left; }
 .panel .text { -webkit-user-select: text; user-select: text; }
 /* Hints for chains can run to 400 characters; keep the board and buttons on screen. */
 .play .panel .text { font-size: 15px; max-height: 11.5em; overflow-y: auto; }
+/* Check the board: the digits line and the pencil marks line, each on its own. */
+.panel .text .line + .line { margin-top: 6px; }
+.panel .text .line.ok { color: var(--ok); font-weight: 600; }
+.panel .text .line.bad { color: var(--danger); font-weight: 600; }
 .panel .buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: auto; }
 .panel .buttons button { height: 42px; }
 .panel .buttons button.apply { background: var(--active); color: var(--active-text); font-weight: 600; }

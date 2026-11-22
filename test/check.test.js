@@ -39,7 +39,10 @@ test('a board with nothing wrong reports nothing wrong', () => {
 test('correct pencil marks are called right', () => {
   const result = checkWork(position({ marks: { [firstEmpty]: allowed(firstEmpty) } }));
   assert.equal(result.problems, 0);
-  assert.equal(result.text, 'Every digit on the board is right. The pencil marks are right too.');
+  assert.deepEqual(result.lines, [
+    { ok: true, text: 'Every digit on the board is right.' },
+    { ok: true, text: 'The pencil marks are right.' },
+  ]);
 });
 
 test('a wrong digit is named and highlighted', () => {
@@ -85,13 +88,26 @@ test('marks a wrong digit explains are not reported as separate mistakes', () =>
   const marks = { [second]: allowed(second) & ~bit(answer(second)) };
   const result = checkWork(position({ values, marks }));
   assert.equal(result.problems, 1, result.text);
-  assert.equal(result.text, `${cellName(firstEmpty)} holds a wrong digit. The pencil marks are right too.`);
+  assert.deepEqual(result.lines, [
+    { ok: false, text: `${cellName(firstEmpty)} holds a wrong digit.` },
+    { ok: true, text: 'The pencil marks are right.' },
+  ]);
 });
 
 test('a cell without pencil marks is never a mistake', () => {
   const result = checkWork(position());
   assert.equal(result.problems, 0);
-  assert.equal(result.text, 'Every digit on the board is right.');
+  assert.deepEqual(result.lines, [{ ok: true, text: 'Every digit on the board is right.' }], 'no line about marks when there are none');
+});
+
+test('both kinds of pencil mark problem share the red marks line', () => {
+  // R1C1 leaves out its answer and holds a 3, which the clue in R1C3 rules out.
+  const result = checkWork(position({ marks: { 0: bit(3) } }));
+  assert.equal(result.lines.length, 2);
+  assert.deepEqual(result.lines[0], { ok: true, text: 'Every digit on the board is right.' });
+  assert.equal(result.lines[1].ok, false);
+  assert.ok(result.lines[1].text.includes('R1C1 has no pencil mark for its answer.'), result.lines[1].text);
+  assert.ok(result.lines[1].text.includes('Remove 3 from R1C1.'), result.lines[1].text);
 });
 
 test('the game adds time once per position, and only when something is wrong', () => {
